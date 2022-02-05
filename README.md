@@ -60,7 +60,7 @@ $ docker-compose -f docker-compose.dev.yml up -d
 
 ## UI
 
-Repository in progress...
+Check the repository [https://github.com/itsalb3rt/ta-vivo](https://github.com/itsalb3rt/ta-vivo)
 
 ---
 
