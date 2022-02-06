@@ -20,4 +20,7 @@ jobs:
           host: ${{secrets.HOST}}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
-          script: ls -la
+          script: |
+            cd /var/www/services/ta-vivo-api
+            git pull
+            docker-compose -f docker-compose.prod.yml up -d
