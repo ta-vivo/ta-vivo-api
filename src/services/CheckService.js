@@ -5,6 +5,7 @@ import TelegramService from './TelegramService';
 import { Op } from 'sequelize';
 import cronTimeTable from '../utils/cronTimeList';
 import { isValidDomain, isValidIpv4, isValidIpv4WithProtocol } from '../utils/validators';
+import MailerService from '../services/MailerService';
 
 let cronJobs = {};
 
@@ -240,6 +241,16 @@ class CheckService {
               userId: integrationCheck.integration.appUserId,
               message: `🚨 ${target} is down at ${dateTimeString}`
             });
+          } else if(integrationCheck.integration.type === 'email') {
+            try {
+              MailerService.sendMail({
+                to: integrationCheck.integration.name,
+                subject: `🚨 ${target} is down at ${dateTimeString}`,
+                body: `🚨 ${target} is down at ${dateTimeString}`
+              });
+            } catch (error) {
+              console.log('🚨 failed to send email', error);
+            }
           }
         });
         console.log(`🔥 send alert for ${target} at ${dateTimeString}`);
