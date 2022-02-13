@@ -11,6 +11,15 @@ const User = sequelize.define('users', {
     type: Sequelize.TEXT,
     allowNull: false,
     unique: true
+  },
+  email: {
+    type: Sequelize.TEXT,
+    allowNull: false,
+    unique: true
+  },
+  fullname: {
+    type: Sequelize.TEXT,
+    allowNull: false
   }
 }, {});
 
