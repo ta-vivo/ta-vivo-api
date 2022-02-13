@@ -19,7 +19,9 @@ const MandatoryData = async () => {
         if (!admin) {
           const encryptedPassword = await bcrypt.hash(adminPassword, 10);
           const newUser = await User.create({
-            username: adminUsername
+            username: adminUsername,
+            email: `${adminUsername}@tavivo.com`,
+            fullname: 'Tavivo Admin',
           });
           await UserCredential.create({
             userId: newUser.id,
