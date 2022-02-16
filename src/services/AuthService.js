@@ -4,16 +4,16 @@ import jwt from 'jsonwebtoken';
 
 class AuthService {
 
-  static async login(credentials) {
+  static async login({email, password}) {
     try {
       const user = await User.findOne({
         where: {
-          username: credentials.username,
+          email: email,
         },
       });
 
       if (!user) {
-        throw ({status: 400, message: 'Invalid username or password'});
+        throw ({status: 400, message: 'Invalid email or password'});
       }
 
       const userCredentials = await UserCredential.findOne({
@@ -22,10 +22,10 @@ class AuthService {
         },
       });
 
-      if (user && (await bcrypt.compare(credentials.password, userCredentials.password))) {
+      if (user && (await bcrypt.compare(password, userCredentials.password))) {
 
         const token = jwt.sign(
-          { userId: user.id, username: credentials.username },
+          { userId: user.id, email: email },
           process.env.TOKEN_KEY,
           {
             expiresIn: '2h',
@@ -58,8 +58,7 @@ class AuthService {
 
       const userCreated = await User.create({
         fullname,
-        email,
-        username: email
+        email
       });
 
       const hashedPassword = await bcrypt.hash(password, 10);
