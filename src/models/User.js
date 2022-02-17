@@ -15,7 +15,19 @@ const User = sequelize.define('users', {
   fullname: {
     type: Sequelize.TEXT,
     allowNull: false
-  }
+  },
+  // To check if user account is enabled or disabled to avoid login
+  enabled: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  // For confirm email
+  active: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
 }, {});
 
 export default User;
