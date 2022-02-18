@@ -21,6 +21,7 @@ const MandatoryData = async () => {
           const newUser = await User.create({
             email: adminUsername,
             fullname: 'Tavivo Admin',
+            active: true
           });
           await UserCredential.create({
             userId: newUser.id,
