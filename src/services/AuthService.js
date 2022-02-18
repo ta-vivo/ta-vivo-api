@@ -26,7 +26,7 @@ class AuthService {
       if (user && (await bcrypt.compare(password, userCredentials.password))) {
 
         const token = jwt.sign(
-          { userId: user.id, email: email },
+          { userId: user.id, email: email, active: user.active, enabled: user.enabled },
           process.env.TOKEN_KEY,
           {
             expiresIn: '2h',
@@ -95,8 +95,41 @@ class AuthService {
       `;
 
       MailerService.sendMail({ to: email, subject: 'Email confirmation', body: emailBody });
+      const login = await this.login({ email, password });
+      return login;
+    } catch (error) {
+      throw error;
+    }
+  }
 
-      return userCreated;
+  static async registerEmailConfirmation({ user, uniqueCode }) {
+    try {
+      const pendingEmailConfirmation = await PendingEmailConfirmation.findOne({
+        where: {
+          userId: user.userId,
+          uniqueCode: uniqueCode,
+        },
+      });
+
+      if (!pendingEmailConfirmation) {
+        throw ({ status: 400, message: 'Invalid code' });
+      }
+
+      await User.update({
+        active: true,
+      }, {
+        where: {
+          id: user.userId,
+        },
+      });
+
+      await PendingEmailConfirmation.destroy({
+        where: {
+          userId: user.userId,
+        },
+      });
+
+      return {};
     } catch (error) {
       throw error;
     }
