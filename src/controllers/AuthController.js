@@ -35,8 +35,8 @@ class AuthController {
     const { uniqueCode } = req.body;
     const user = req.user;
     try {
-      await AuthService.registerEmailConfirmation({ user, uniqueCode });
-      return res.json(Response.get('success', {}));
+      const token = await AuthService.registerEmailConfirmation({ user, uniqueCode });
+      return res.json(Response.get('success', token));
     } catch (error) {
       res.status(error.status || 500).json({
         message: error.message || 'Something goes wrong',
