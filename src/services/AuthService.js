@@ -125,7 +125,13 @@ class AuthService {
         },
       });
 
-      return {};
+      const updatedUser = await User.findOne({ where: { id: user.userId } });
+
+      const token = this.createJWT({
+        userId: updatedUser.id, email: updatedUser.email, active: updatedUser.active, enabled: updatedUser.enabled
+      });
+
+      return { token };
     } catch (error) {
       throw error;
     }
