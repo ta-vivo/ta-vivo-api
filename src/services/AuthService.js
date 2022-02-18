@@ -135,6 +135,39 @@ class AuthService {
     }
   }
 
+  static async requestRegisterEmailConfirmation({ user }) {
+    try {
+      const uniqueCode = `${user.userId}${Math.random().toString(36).substring(2, 7)}`;
+
+      await PendingEmailConfirmation.create({
+        userId: user.userId,
+        uniqueCode: uniqueCode,
+      });
+
+      const emailBody = `
+      <div style="text-align: center;">
+        <h1>Verification code</h1>
+        <p style="font-size: 30px; letter-spacing: 10px">
+          ${uniqueCode}
+        </p>
+        <div>
+          Here is your email verification code.
+        </div>
+        <div>
+          It will expire in 10 minutes.
+        </div>
+        <p>
+          Sent by Ta-vivo.
+        </p>
+      </div>
+      `;
+
+      MailerService.sendMail({ to: user.email, subject: 'Email confirmation', body: emailBody });
+      return {};
+    } catch (error) {
+      throw error;
+    }
+  }
 
 }
 
