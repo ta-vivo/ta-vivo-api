@@ -5,7 +5,7 @@ import MailerService from '../services/MailerService';
 
 class AuthService {
 
-  static async login({email, password}) {
+  static async login({ email, password }) {
     try {
       const user = await User.findOne({
         where: {
@@ -14,7 +14,7 @@ class AuthService {
       });
 
       if (!user) {
-        throw ({status: 400, message: 'Invalid email or password'});
+        throw ({ status: 400, message: 'Invalid email or password' });
       }
 
       const userCredentials = await UserCredential.findOne({
@@ -25,13 +25,9 @@ class AuthService {
 
       if (user && (await bcrypt.compare(password, userCredentials.password))) {
 
-        const token = jwt.sign(
-          { userId: user.id, email: email, active: user.active, enabled: user.enabled },
-          process.env.TOKEN_KEY,
-          {
-            expiresIn: '2h',
-          }
-        );
+        const token = this.createJWT({
+          userId: user.id, email: email, active: user.active, enabled: user.enabled
+        });
 
         return { token: token };
       }
@@ -167,6 +163,18 @@ class AuthService {
     } catch (error) {
       throw error;
     }
+  }
+
+  static createJWT(user) {
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, active: user.active, enabled: user.enabled },
+      process.env.TOKEN_KEY,
+      {
+        expiresIn: '2h',
+      }
+    );
+
+    return token;
   }
 
 }
