@@ -7,5 +7,6 @@ const router = Router();
 router.post('/login', AuthController.login);
 router.post('/register', AuthController.register);
 router.post('/register-email-confirmation', verifyToken, AuthController.registerEmailConfirmation);
+router.get('/request-register-email-confirmation', verifyToken, AuthController.requestRegisterEmailConfirmation);
 
 export default router;
