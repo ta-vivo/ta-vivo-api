@@ -6,6 +6,7 @@ import Integration from './Integration';
 import CheckNotificationMethod from './CheckNotificationMethod';
 import PendingIntegration from './PendingIntegration';
 import CheckIntegration from './CheckIntegration';
+import PendingEmailConfirmation from './PendingEmailConfirmation';
 
 export {
   User,
@@ -15,5 +16,6 @@ export {
   CheckNotificationMethod,
   UserCredential,
   PendingIntegration,
-  CheckIntegration
+  CheckIntegration,
+  PendingEmailConfirmation
 };

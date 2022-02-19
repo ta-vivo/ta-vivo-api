@@ -24,7 +24,7 @@ $ cp .env.example .env
 :warning: The default user is on the `.env` file;
 
 ```bash
-ADMIN_USERNAME=admin
+ADMIN_USERNAME=admin@tavivo.com
 ADMIN_PASSWORD=secret
 ```
 

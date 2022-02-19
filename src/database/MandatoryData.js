@@ -12,14 +12,16 @@ const MandatoryData = async () => {
       console.log('Create initial data...');
 
       if (process.env.FORCE_SYNC == 'true') {
-        const adminUsername = process.env.ADMIN_USERNAME;
+        const adminUsername = `${process.env.ADMIN_USERNAME}@tavivo.com`;
         const adminPassword = process.env.ADMIN_PASSWORD;
 
-        const admin = await User.findOne({ where: { username: adminUsername } });
+        const admin = await User.findOne({ where: { email: adminUsername } });
         if (!admin) {
           const encryptedPassword = await bcrypt.hash(adminPassword, 10);
           const newUser = await User.create({
-            username: adminUsername
+            email: adminUsername,
+            fullname: 'Tavivo Admin',
+            active: true
           });
           await UserCredential.create({
             userId: newUser.id,
