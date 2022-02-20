@@ -1,6 +1,6 @@
 
 import bcrypt from 'bcryptjs';
-import { User, UserCredential } from '../models';
+import { User, UserCredential, Role } from '../models';
 import { sequelize } from './database';
 
 const MandatoryData = async () => {
@@ -12,6 +12,18 @@ const MandatoryData = async () => {
       console.log('Create initial data...');
 
       if (process.env.FORCE_SYNC == 'true') {
+
+        // Roles
+        const roles = [
+          { id: 1, name: 'administrator' },
+          { id: 2, name: 'basic' },
+          { id: 3, name: 'pro' },
+          { id: 4, name: 'enterprise' },
+        ];
+
+        await Role.bulkCreate(roles);
+
+        // Admin user
         const adminUsername = process.env.ADMIN_USERNAME;
         const adminPassword = process.env.ADMIN_PASSWORD;
 
@@ -21,8 +33,10 @@ const MandatoryData = async () => {
           const newUser = await User.create({
             email: adminUsername,
             fullname: 'Tavivo Admin',
-            active: true
+            active: true,
+            roleId: 1
           });
+
           await UserCredential.create({
             userId: newUser.id,
             password: encryptedPassword
