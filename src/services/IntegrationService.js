@@ -4,13 +4,13 @@ class IntegrationService {
 
   static async requestEmailConfirmation({ email, user }) {
     try {
-      const uniqueCode = `${user.userId}${Math.random().toString(36).substring(2, 7)}`;
+      const uniqueCode = `${user.id}${Math.random().toString(36).substring(2, 7)}`;
       await PendingIntegration.create({
         data: {
           email: email
         },
         uniqueCode,
-        appUserId: user.userId,
+        appUserId: user.id,
         integrationType: 'email'
       });
 
@@ -58,7 +58,7 @@ class IntegrationService {
       const integration = {
         appUserId: pendingIntegration.appUserId,
         type: pendingIntegration.integrationType,
-        userId: user.userId,
+        userId: user.id,
         name: pendingIntegration.integrationType === 'email' ? pendingIntegration.data.email : newIntegration.name,
       };
       const entityCreated = await Integration.create(integration);
@@ -74,7 +74,7 @@ class IntegrationService {
       const entityUpdated = await Integration.update(integration, {
         where: {
           id,
-          userId: user.userId
+          userId: user.id
         }
       });
       return entityUpdated;
@@ -86,9 +86,9 @@ class IntegrationService {
   static async getAll({ criterions, user }) {
     try {
       if (criterions.where) {
-        criterions.where.userId = user.userId;
+        criterions.where.userId = user.id;
       } else {
-        criterions.where = { userId: user.userId };
+        criterions.where = { userId: user.id };
       }
 
       const { rows } = await Integration.findAndCountAll({
@@ -106,7 +106,7 @@ class IntegrationService {
   static async delete({ id, user }) {
     try {
       const rowCount = await Integration.destroy({
-        where: { id, userId: user.userId }
+        where: { id, userId: user.id }
       });
       return { count: rowCount };
     } catch (error) {

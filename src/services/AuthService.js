@@ -26,7 +26,7 @@ class AuthService {
       if (user && (await bcrypt.compare(password, userCredentials.password))) {
 
         const token = this.createJWT({
-          userId: user.id, email: email, active: user.active, enabled: user.enabled
+          id: user.id, email: email, active: user.active, enabled: user.enabled
         });
 
         return { token: token };
@@ -102,7 +102,7 @@ class AuthService {
     try {
       const pendingEmailConfirmation = await PendingEmailConfirmation.findOne({
         where: {
-          userId: user.userId,
+          userId: user.id,
           uniqueCode: uniqueCode,
         },
       });
@@ -115,17 +115,17 @@ class AuthService {
         active: true,
       }, {
         where: {
-          id: user.userId,
+          id: user.id,
         },
       });
 
       await PendingEmailConfirmation.destroy({
         where: {
-          userId: user.userId,
+          userId: user.id,
         },
       });
 
-      const updatedUser = await User.findOne({ where: { id: user.userId } });
+      const updatedUser = await User.findOne({ where: { id: user.id } });
 
       const token = this.createJWT({
         userId: updatedUser.id, email: updatedUser.email, active: updatedUser.active, enabled: updatedUser.enabled
@@ -139,10 +139,10 @@ class AuthService {
 
   static async requestRegisterEmailConfirmation({ user }) {
     try {
-      const uniqueCode = `${user.userId}${Math.random().toString(36).substring(2, 7)}`;
+      const uniqueCode = `${user.id}${Math.random().toString(36).substring(2, 7)}`;
 
       await PendingEmailConfirmation.create({
-        userId: user.userId,
+        userId: user.id,
         uniqueCode: uniqueCode,
       });
 
@@ -173,7 +173,7 @@ class AuthService {
 
   static createJWT(user) {
     const token = jwt.sign(
-      { userId: user.userId, email: user.email, active: user.active, enabled: user.enabled },
+      { id: user.id, email: user.email, active: user.active, enabled: user.enabled },
       process.env.TOKEN_KEY,
       {
         expiresIn: '2h',

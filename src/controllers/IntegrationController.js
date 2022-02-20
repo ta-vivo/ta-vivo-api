@@ -51,9 +51,9 @@ class IntegrationsController {
 
       let { where, limit, offset, order } = querystringConverterHelper.parseQuery(query);
       if (where) {
-        where = { ...where, userId: req.user.userId };
+        where = { ...where, userId: req.user.id };
       } else {
-        where = { userId: req.user.userId };
+        where = { userId: req.user.id };
       }
 
       const { rows, count, total } = await IntegrationService.getAll({

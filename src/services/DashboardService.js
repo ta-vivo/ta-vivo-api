@@ -10,13 +10,13 @@ class DashboardService {
 
       data.integrations = await Integration.count({
         where: {
-          userId: user.userId
+          userId: user.id
         }
       });
 
       data.checks = await Checks.count({
         where: {
-          userId: user.userId
+          userId: user.id
         }
       });
 
@@ -26,7 +26,7 @@ class DashboardService {
             model: Checks,
             attributes: ['name', 'id'],
             where: {
-              userId: user.userId
+              userId: user.id
             }
           }
         ],
@@ -51,7 +51,7 @@ class DashboardService {
             model: Checks,
             attributes: ['name', 'id'],
             where: {
-              userId: user.userId
+              userId: user.id
             }
           }
         ],
