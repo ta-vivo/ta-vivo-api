@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
+import { User } from '../models/index';
 
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const token =
     req.body.token || req.query.token || req.headers['x-access-token'];
 
@@ -9,7 +10,8 @@ const verifyToken = (req, res, next) => {
   }
   try {
     const decoded = jwt.verify(token, process.env.TOKEN_KEY);
-    req.user = decoded;
+    const user = await User.findOne({where: {id: decoded.id}});
+    req.user = user.dataValues;
   } catch (err) {
     return res.status(401).send('Invalid Token');
   }

@@ -17,7 +17,7 @@ class CheckService {
       target: newCheck.target,
       periodToCheck: newCheck.periodToCheck,
       enabled: newCheck.enabled ? newCheck.enabled : false,
-      userId: newCheck.user.userId
+      userId: newCheck.user.id
     };
 
     // check isValidDomain
@@ -59,6 +59,7 @@ class CheckService {
       this.runCheck(entityCreated);
       return entityCreated;
     } catch (error) {
+      console.log('🚀 ~ file: CheckService.js ~ line 62 ~ CheckService ~ create ~ error', error);
       throw error;
     }
   }
@@ -173,7 +174,7 @@ class CheckService {
 
     try {
       const check = await Checks.findOne({
-        where: { id, userId: user.userId },
+        where: { id, userId: user.id },
         include: [{ model: CheckIntegration, include: [{ model: Integration }] }]
       });
       return check;
@@ -201,9 +202,9 @@ class CheckService {
 
   static async delete({ id, user }) {
     try {
-      const check = await Checks.findOne({ where: { id, userId: user.userId } });
+      const check = await Checks.findOne({ where: { id, userId: user.id } });
       const rowCount = await Checks.destroy({
-        where: { id, userId: user.userId }
+        where: { id, userId: user.id }
       });
       // stop cron job
       this.stopCheck(check);
