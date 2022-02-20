@@ -149,7 +149,7 @@ class AuthService {
       });
 
       const token = this.createJWT({
-        userId: updatedUser.id,
+        id: updatedUser.id,
         email: updatedUser.email,
         active: updatedUser.active,
         enabled: updatedUser.enabled,
