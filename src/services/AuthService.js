@@ -1,4 +1,4 @@
-import { User, UserCredential, PendingEmailConfirmation } from '../models/';
+import { User, UserCredential, PendingEmailConfirmation, Role } from '../models/';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import MailerService from '../services/MailerService';
@@ -11,6 +11,12 @@ class AuthService {
         where: {
           email: email,
         },
+        include: [
+          {
+            model: Role,
+            attributes: ['name']
+          },
+        ],
       });
 
       if (!user) {
@@ -26,7 +32,7 @@ class AuthService {
       if (user && (await bcrypt.compare(password, userCredentials.password))) {
 
         const token = this.createJWT({
-          id: user.id, email: email, active: user.active, enabled: user.enabled
+          id: user.id, email: email, active: user.active, enabled: user.enabled, role: user.role.name
         });
 
         return { token: token };
@@ -53,9 +59,16 @@ class AuthService {
         throw ({ status: 400, message: 'Email already exists' });
       }
 
+      const basicRole = await Role.findOne({
+        where: {
+          name: 'basic',
+        },
+      });
+
       const userCreated = await User.create({
         fullname,
-        email
+        email,
+        roleId: basicRole.id
       });
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -125,10 +138,22 @@ class AuthService {
         },
       });
 
-      const updatedUser = await User.findOne({ where: { id: user.id } });
+      const updatedUser = await User.findOne({
+        where: { id: user.id },
+        include: [
+          {
+            model: Role,
+            attributes: ['name']
+          },
+        ],
+      });
 
       const token = this.createJWT({
-        userId: updatedUser.id, email: updatedUser.email, active: updatedUser.active, enabled: updatedUser.enabled
+        id: updatedUser.id,
+        email: updatedUser.email,
+        active: updatedUser.active,
+        enabled: updatedUser.enabled,
+        role: updatedUser.role.name
       });
 
       return { token };
@@ -173,7 +198,7 @@ class AuthService {
 
   static createJWT(user) {
     const token = jwt.sign(
-      { id: user.id, email: user.email, active: user.active, enabled: user.enabled },
+      { id: user.id, email: user.email, active: user.active, enabled: user.enabled, role: user.role },
       process.env.TOKEN_KEY,
       {
         expiresIn: '2h',

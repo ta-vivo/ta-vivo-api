@@ -1,4 +1,5 @@
 import User from './User';
+import Role from './Role';
 import UserCredential from './UserCredential';
 import Checks from './Checks';
 import CheckLogs from './CheckLogs';
@@ -10,6 +11,7 @@ import PendingEmailConfirmation from './PendingEmailConfirmation';
 
 export {
   User,
+  Role,
   Checks,
   CheckLogs,
   Integration,
