@@ -1,4 +1,5 @@
 import IntegrationService from '../services/IntegrationService';
+import SlackService from '../services/SlackService';
 import Response from '../utils/response';
 import querystringConverterHelper from '../utils/querystringConverterHelper';
 
@@ -9,6 +10,21 @@ class IntegrationsController {
     const newIntegration = req.body;
     try {
       const entityCreated = await IntegrationService.create({ newIntegration, user: req.user });
+      return res.json(Response.get('Integration created', entityCreated));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
+  static async createSlack(req, res) {
+    const { authorizationCode } = req.body;
+    const { user } = req;
+
+    try {
+      const entityCreated = await SlackService.createIntegration(user, { authorizationCode });
       return res.json(Response.get('Integration created', entityCreated));
     } catch (error) {
       res.status(error.status || 500).json({
