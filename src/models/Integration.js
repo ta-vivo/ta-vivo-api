@@ -13,12 +13,12 @@ const Integration = sequelize.define('integrations', {
     allowNull: false
   },
   type: {
-    type: Sequelize.ENUM('telegram', 'email'),
+    type: Sequelize.ENUM('telegram', 'email', 'slack'),
   },
   appUserId: {
     type: Sequelize.TEXT,
     allowNull: false
-  },
+  }
 }, {});
 
 Integration.belongsTo(User, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
