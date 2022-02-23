@@ -6,6 +6,7 @@ import { Op } from 'sequelize';
 import cronTimeTable from '../utils/cronTimeList';
 import { isValidDomain, isValidIpv4, isValidIpv4WithProtocol } from '../utils/validators';
 import MailerService from '../services/MailerService';
+import SlackService from '../services/SlackService';
 
 let cronJobs = {};
 
@@ -235,22 +236,30 @@ class CheckService {
           status: 'down'
         });
 
-        const mostUpdatedCheck = await this.getById({ id: id, user: { userId } });
+        const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
+        const message = `🚨 ${target} is down at ${dateTimeString} (UTC)`;
+
         mostUpdatedCheck.check_integrations.forEach(async (integrationCheck) => {
           if (integrationCheck.integration.type === 'telegram') {
             TelegramService.sendMessage({
               userId: integrationCheck.integration.appUserId,
-              message: `🚨 ${target} is down at ${dateTimeString}`
+              message: message
             });
           } else if(integrationCheck.integration.type === 'email') {
             try {
               MailerService.sendMail({
                 to: integrationCheck.integration.name,
-                subject: `🚨 ${target} is down at ${dateTimeString}`,
-                body: `🚨 ${target} is down at ${dateTimeString}`
+                subject: message,
+                body: message
               });
             } catch (error) {
               console.log('🚨 failed to send email', error);
+            }
+          } else if (integrationCheck.integration.type === 'slack') {
+            try {
+              SlackService.sendMessage(message, integrationCheck.integration.appUserId);
+            } catch (error) {
+              console.log('🚨 failed to send slack', error);
             }
           }
         });
