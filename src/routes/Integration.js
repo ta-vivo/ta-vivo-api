@@ -7,6 +7,7 @@ const router = Router();
 router.get('/', verifyToken, IntegrationController.getAll);
 router.post('/', verifyToken, IntegrationController.create);
 router.post('/slack', verifyToken, IntegrationController.createSlack);
+router.post('/discord', verifyToken, IntegrationController.createDiscord);
 router.post('/request-email-code', verifyToken, IntegrationController.requestEmailConfirmation);
 router.put('/:id', verifyToken, IntegrationController.update);
 router.delete('/:id', verifyToken, IntegrationController.delete);
