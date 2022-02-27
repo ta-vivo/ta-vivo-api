@@ -13,11 +13,17 @@ const Integration = sequelize.define('integrations', {
     allowNull: false
   },
   type: {
-    type: Sequelize.ENUM('telegram', 'email', 'slack'),
+    type: Sequelize.ENUM('telegram', 'email', 'slack', 'discord'),
   },
   appUserId: {
     type: Sequelize.TEXT,
     allowNull: false
+  },
+  // To store extra data like discord webhook token
+  data: {
+    type: Sequelize.JSON,
+    allowNull: true,
+    defaultValue: {}
   }
 }, {});
 
