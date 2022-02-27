@@ -7,6 +7,7 @@ import cronTimeTable from '../utils/cronTimeList';
 import { isValidDomain, isValidIpv4, isValidIpv4WithProtocol } from '../utils/validators';
 import MailerService from '../services/MailerService';
 import SlackService from '../services/SlackService';
+import discordService from '../services/DiscordService';
 
 let cronJobs = {};
 
@@ -27,7 +28,7 @@ class CheckService {
     }
 
     try {
-      await axios.get(checkForCreate.target, { timeout: 5000});
+      await axios.get(checkForCreate.target, { timeout: 5000 });
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
     }
@@ -74,7 +75,7 @@ class CheckService {
 
     try {
       if (check.target) {
-        await axios.get(check.target, { timeout: 5000});
+        await axios.get(check.target, { timeout: 5000 });
       }
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
@@ -245,7 +246,7 @@ class CheckService {
               userId: integrationCheck.integration.appUserId,
               message: message
             });
-          } else if(integrationCheck.integration.type === 'email') {
+          } else if (integrationCheck.integration.type === 'email') {
             try {
               MailerService.sendMail({
                 to: integrationCheck.integration.name,
@@ -260,6 +261,12 @@ class CheckService {
               SlackService.sendMessage(message, integrationCheck.integration.appUserId);
             } catch (error) {
               console.log('🚨 failed to send slack', error);
+            }
+          } else if (integrationCheck.integration.type === 'discord') {
+            try {
+              discordService.sendMessage(integrationCheck.integration.appUserId, integrationCheck.integration.data.token, message);
+            } catch (error) {
+              console.log('🚨 failed to send discord', error);
             }
           }
         });
