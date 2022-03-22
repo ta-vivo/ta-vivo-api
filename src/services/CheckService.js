@@ -222,19 +222,25 @@ class CheckService {
       const { id, target, userId } = check;
       const dateTime = new Date();
       const dateTimeString = `${dateTime.getDate()}/${dateTime.getMonth()}/${dateTime.getFullYear()} ${dateTime.getHours()}:${dateTime.getMinutes()}:${dateTime.getSeconds()}`;
+      const durationStart = performance.now();
+      let duration = 0;
+
       try {
         await axios.get(target, {
           timeout: 5000
         });
+        duration = (performance.now() - durationStart).toFixed(5);
         console.log(`✅ ${target} is alive at ${dateTimeString}`);
         CheckLogs.create({
           checkId: id,
-          status: 'up'
+          status: 'up',
+          duration: duration
         });
       } catch (error) {
         CheckLogs.create({
           checkId: id,
-          status: 'down'
+          status: 'down',
+          duration: duration
         });
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });

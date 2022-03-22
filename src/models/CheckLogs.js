@@ -11,6 +11,10 @@ const CheckLogs = sequelize.define('check_logs', {
   status: {
     type: Sequelize.ENUM('up', 'down'),
   },
+  duration: {
+    type: Sequelize.TEXT,
+    allowNull: true
+  }
 }, {});
 
 CheckLogs.belongsTo(Checks);
