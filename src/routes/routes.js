@@ -5,6 +5,7 @@ import CheckRoutes from '../routes/Check';
 import IntegrationRoutes from '../routes/Integration';
 import Auth from '../routes/Auth';
 import Dashboard from '../routes/Dashboard';
+import Payment from '../routes/Payment';
 
 // Initialization
 let router = express.Router();
@@ -16,5 +17,6 @@ router.use('/checks', CheckRoutes);
 router.use('/auth', Auth);
 router.use('/integrations', IntegrationRoutes);
 router.use('/dashboard', Dashboard);
+router.use('/payments', Payment);
 
 export default router;
