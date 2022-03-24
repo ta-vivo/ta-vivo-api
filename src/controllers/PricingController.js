@@ -21,7 +21,7 @@ class PricingController {
           price: 3,
           features: [
             { item: 'checks', quantity: 25 },
-            { item: 'logsHistory', quantity: 1000 },
+            { item: 'logsHistory', quantity: '1,000' },
             { item: 'integrations', quantity: 20 },
           ],
         },
@@ -31,7 +31,7 @@ class PricingController {
           price: 10,
           features: [
             { item: 'checks', quantity: 120 },
-            { item: 'logsHistory', quantity: 5000 },
+            { item: 'logsHistory', quantity: '5,000' },
             { item: 'integrations', quantity: 50 },
           ],
         },
@@ -41,7 +41,7 @@ class PricingController {
           price: 20,
           features: [
             { item: 'checks', quantity: 500 },
-            { item: 'logsHistory', quantity: 15000 },
+            { item: 'logsHistory', quantity: '15,000' },
             { item: 'integrations', quantity: 100 },
           ],
         },
