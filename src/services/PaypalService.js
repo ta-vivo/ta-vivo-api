@@ -1,5 +1,7 @@
 import fetch from 'node-fetch';
-
+import Payment from '../models/Payment';
+import Role from '../models/Role';
+import User from '../models/User';
 class PayPalService {
   static async paypalRequestToken() {
     try {
@@ -32,10 +34,59 @@ class PayPalService {
       const data = await response.json();
       return data.access_token;
     } catch (error) {
-      console.log('🚀 ~ file: PaypalService.js ~ line 37 ~ PayPalService ~ generateAccessToken ~ error', error);
       throw error;
     }
 
+  }
+
+  static async getPlans(accessToken) {
+    try {
+      const response = await fetch(`${process.env.PAYPAL_API}/v1/billing/plans`, {
+        method: 'get',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Accept-Language': 'en_US',
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      return data.plans;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async paypalSubscription({ user, subscriptionId }) {
+    try {
+      const accessToken = await this.generateAccessToken();
+      const response = await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscriptionId}`, {
+        method: 'get',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (data && data.status === 'ACTIVE') {
+
+        const plans = await this.getPlans(accessToken);
+        const plan = plans.find(plan => plan.id === data.plan_id);
+
+        const newRole = await Role.findOne({ where: { name: plan.name.toLowerCase() } });
+        
+        await User.update({ roleId: newRole.id }, { where: { id: user.id } });
+        await Payment.create({
+          type: 'paypal',
+          data: {
+            subscriptionId,
+          },
+          userId: user.id,
+        });
+      }
+      return {};
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
