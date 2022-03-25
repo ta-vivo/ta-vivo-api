@@ -2,7 +2,7 @@ import Sequelize from 'sequelize';
 import { sequelize } from '../database/database';
 import { User } from './index';
 
-const Payment = sequelize.define('payments', {
+const UserSubscription = sequelize.define('users_subscriptions', {
   id: {
     type: Sequelize.INTEGER,
     primaryKey: true,
@@ -19,7 +19,7 @@ const Payment = sequelize.define('payments', {
   }
 }, {});
 
-Payment.belongsTo(User, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
-User.hasMany(Payment);
+UserSubscription.belongsTo(User, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
+User.hasMany(UserSubscription);
 
-export default Payment;
+export default UserSubscription;
