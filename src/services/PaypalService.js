@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import Payment from '../models/Payment';
+import UserSubscription from '../models/UserSubscription';
 import Role from '../models/Role';
 import User from '../models/User';
 class PayPalService {
@@ -75,7 +75,7 @@ class PayPalService {
         const newRole = await Role.findOne({ where: { name: plan.name.toLowerCase() } });
         
         await User.update({ roleId: newRole.id }, { where: { id: user.id } });
-        await Payment.create({
+        await UserSubscription.create({
           type: 'paypal',
           data: {
             subscriptionId,
