@@ -16,7 +16,7 @@ class PricingController {
           ],
         },
         {
-          id: 'P-7PA122898W931520MMI5IDEQ',
+          id: process.env.PAYPAL_PRO_SUBSCRIPTION_ID,
           name: 'Pro',
           price: 3,
           features: [
@@ -26,7 +26,7 @@ class PricingController {
           ],
         },
         {
-          id: 'P-7PA122898W931520MMI5IDEQ',
+          id: process.env.PAYPAL_ENTERPRISE_SUBSCRIPTION_ID,
           name: 'Enterprise',
           price: 10,
           features: [
@@ -36,7 +36,7 @@ class PricingController {
           ],
         },
         {
-          id: 'P-7PA122898W931520MMI5IDEQ',
+          id: process.env.PAYPAL_ENTERPRISEPLUS_SUBSCRIPTION_ID,
           name: 'Enterprise+',
           price: 20,
           features: [
