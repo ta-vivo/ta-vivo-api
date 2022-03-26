@@ -19,6 +19,7 @@ const MandatoryData = async () => {
           { id: 2, name: 'basic' },
           { id: 3, name: 'pro' },
           { id: 4, name: 'enterprise' },
+          { id: 5, name: 'enterprise+' },
         ];
 
         await Role.bulkCreate(roles);
