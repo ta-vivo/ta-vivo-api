@@ -59,6 +59,7 @@ class AuthService {
       const token = this.createJWT({
         id: user.id,
         email: userData.email,
+        fullname: userData.fullname,
         active: userData.active,
         enabled: userData.enabled,
         role: userData.role.name
@@ -224,7 +225,7 @@ class AuthService {
 
   static createJWT(user) {
     const token = jwt.sign(
-      { id: user.id, email: user.email, active: user.active, enabled: user.enabled, role: user.role },
+      { id: user.id, email: user.email, fullname: user.fullname, active: user.active, enabled: user.enabled, role: user.role },
       process.env.TOKEN_KEY,
       {
         expiresIn: '2h',
