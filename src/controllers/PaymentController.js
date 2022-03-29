@@ -9,7 +9,10 @@ class PaymentController {
 
       return res.json(Response.get('Token found', token));
     } catch (error) {
-      return res.json(Response.get('Something goes wrong', error, 500));
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
     }
   }
 
@@ -21,7 +24,25 @@ class PaymentController {
 
       return res.json(Response.get('Subscription created', subscription));
     } catch (error) {
-      return res.json(Response.get('Something goes wrong', error, 500));
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
+  static async paypalSusbcriptionPause(req, res) {
+    try {
+      const { subscriptionId } = req.body;
+      const { user } = req;
+      const subscription = await PaypalService.paypalSusbcriptionPause({ user, subscriptionId });
+
+      return res.json(Response.get('Subscription paused', subscription));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
     }
   }
 
