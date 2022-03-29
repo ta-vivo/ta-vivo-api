@@ -75,6 +75,16 @@ class PayPalService {
         const newRole = await Role.findOne({ where: { name: plan.name.toLowerCase() } });
 
         await User.update({ roleId: newRole.id }, { where: { id: user.id } });
+        const currentSubscription = await UserSubscription.findOne({
+          where: {
+            userId: user.id
+          },
+        });
+
+        if (currentSubscription) {
+          await currentSubscription.destroy();
+        }
+
         await UserSubscription.create({
           type: 'paypal',
           data: {
@@ -108,7 +118,7 @@ class PayPalService {
         reason: 'Cancelled by customer'
       };
       try {
-        const response = await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscription.data.subscriptionId}/cancel`, {
+        await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscription.data.subscriptionId}/cancel`, {
           method: 'post',
           body: JSON.stringify(body),
           headers: {
@@ -116,7 +126,6 @@ class PayPalService {
             'Content-Type': 'application/json',
           }
         });
-        console.log(response);
         const newRole = await Role.findOne({ where: { name: 'basic' } });
 
         await User.update({ roleId: newRole.id }, { where: { id: user.id } });
