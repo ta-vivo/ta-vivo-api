@@ -116,6 +116,10 @@ class PayPalService {
             'Content-Type': 'application/json',
           }
         });
+        const newRole = await Role.findOne({ where: { name: 'basic' } });
+
+        await User.update({ roleId: newRole.id }, { where: { id: user.id } });
+        await subscription.destroy();
         return { success: true };
       } catch (error) {
         throw error;
