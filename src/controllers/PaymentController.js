@@ -31,12 +31,12 @@ class PaymentController {
     }
   }
 
-  static async paypalSusbcriptionPause(req, res) {
+  static async paypalSusbcriptionCancel(req, res) {
     try {
       const { user } = req;
-      const subscription = await PaypalService.paypalSusbcriptionPause({ user });
+      const subscription = await PaypalService.paypalSusbcriptionCancel({ user });
 
-      return res.json(Response.get('Subscription paused', subscription));
+      return res.json(Response.get('Subscription cancelled', subscription));
     } catch (error) {
       res.status(error.status || 500).json({
         message: error.message || 'Something goes wrong',

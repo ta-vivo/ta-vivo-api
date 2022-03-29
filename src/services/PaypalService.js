@@ -89,7 +89,7 @@ class PayPalService {
     }
   }
 
-  static async paypalSusbcriptionPause({ user }) {
+  static async paypalSusbcriptionCancel({ user }) {
     try {
 
       const subscription = await UserSubscription.findOne({
@@ -105,10 +105,10 @@ class PayPalService {
 
       const accessToken = await this.generateAccessToken();
       const body = {
-        reason: 'Paused by customer'
+        reason: 'Cancelled by customer'
       };
       try {
-        await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscription.data.subscriptionId}/suspend`, {
+        const response = await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscription.data.subscriptionId}/cancel`, {
           method: 'post',
           body: JSON.stringify(body),
           headers: {
@@ -116,6 +116,7 @@ class PayPalService {
             'Content-Type': 'application/json',
           }
         });
+        console.log(response);
         const newRole = await Role.findOne({ where: { name: 'basic' } });
 
         await User.update({ roleId: newRole.id }, { where: { id: user.id } });
