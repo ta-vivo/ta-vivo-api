@@ -73,7 +73,7 @@ class PayPalService {
         const plan = plans.find(plan => plan.id === data.plan_id);
 
         const newRole = await Role.findOne({ where: { name: plan.name.toLowerCase() } });
-        
+
         await User.update({ roleId: newRole.id }, { where: { id: user.id } });
         await UserSubscription.create({
           type: 'paypal',
@@ -88,6 +88,45 @@ class PayPalService {
       throw error;
     }
   }
+
+  static async paypalSusbcriptionPause({ user, subscriptionId }) {
+    try {
+
+      const subscription = await UserSubscription.findOne({
+        where: {
+          userId: user.id, type: 'paypal', data: {
+            subscriptionId,
+          }
+        }
+      });
+
+      if (!subscription) {
+        throw { message: 'Subscription not found', status: 404 };
+      }
+
+      const accessToken = await this.generateAccessToken();
+      const body = {
+        reason: 'Paused by customer'
+      };
+      try {
+        await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscriptionId}/suspend`, {
+          method: 'post',
+          body: JSON.stringify(body),
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          }
+        });
+        return {success: true};
+      } catch (error) {
+        throw error;
+      }
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }
 
 export default PayPalService;
