@@ -6,5 +6,6 @@ const router = Router();
 
 router.get('/paypal-request-token', verifyToken, PaymentController.paypalRequestToken);
 router.post('/paypal-subscription', verifyToken, PaymentController.paypalSusbcription);
+router.post('/paypal-subscription-pause', verifyToken, PaymentController.paypalSusbcriptionPause);
 
 export default router;
