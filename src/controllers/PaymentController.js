@@ -33,9 +33,8 @@ class PaymentController {
 
   static async paypalSusbcriptionPause(req, res) {
     try {
-      const { subscriptionId } = req.body;
       const { user } = req;
-      const subscription = await PaypalService.paypalSusbcriptionPause({ user, subscriptionId });
+      const subscription = await PaypalService.paypalSusbcriptionPause({ user });
 
       return res.json(Response.get('Subscription paused', subscription));
     } catch (error) {

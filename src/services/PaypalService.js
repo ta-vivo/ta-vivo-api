@@ -89,14 +89,13 @@ class PayPalService {
     }
   }
 
-  static async paypalSusbcriptionPause({ user, subscriptionId }) {
+  static async paypalSusbcriptionPause({ user }) {
     try {
 
       const subscription = await UserSubscription.findOne({
         where: {
-          userId: user.id, type: 'paypal', data: {
-            subscriptionId,
-          }
+          userId: user.id,
+          type: 'paypal'
         }
       });
 
@@ -109,7 +108,7 @@ class PayPalService {
         reason: 'Paused by customer'
       };
       try {
-        await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscriptionId}/suspend`, {
+        await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscription.data.subscriptionId}/suspend`, {
           method: 'post',
           body: JSON.stringify(body),
           headers: {
@@ -117,7 +116,7 @@ class PayPalService {
             'Content-Type': 'application/json',
           }
         });
-        return {success: true};
+        return { success: true };
       } catch (error) {
         throw error;
       }
