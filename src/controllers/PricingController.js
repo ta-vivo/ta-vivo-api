@@ -7,7 +7,7 @@ class PricingController {
       const pricing = [
         {
           id: 1,
-          name: 'Free',
+          name: 'Basic',
           price: 0,
           features: [
             { item: 'checks', quantity: 10 },
