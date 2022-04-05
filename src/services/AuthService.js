@@ -43,6 +43,33 @@ class AuthService {
     }
   }
 
+  static async me({ user }) {
+    try {
+      const userData = await User.findOne({
+        where: {
+          id: user.id,
+        },
+        include: [
+          {
+            model: Role,
+            attributes: ['name']
+          },
+        ],
+      });
+      const token = this.createJWT({
+        id: user.id,
+        email: userData.email,
+        fullname: userData.fullname,
+        active: userData.active,
+        enabled: userData.enabled,
+        role: userData.role.name
+      });
+      return {token};
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async register({ fullname, email, password, confirmPassword }) {
     try {
       if (password !== confirmPassword) {
@@ -198,7 +225,7 @@ class AuthService {
 
   static createJWT(user) {
     const token = jwt.sign(
-      { id: user.id, email: user.email, active: user.active, enabled: user.enabled, role: user.role },
+      { id: user.id, email: user.email, fullname: user.fullname, active: user.active, enabled: user.enabled, role: user.role },
       process.env.TOKEN_KEY,
       {
         expiresIn: '2h',
