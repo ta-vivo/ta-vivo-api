@@ -2,7 +2,7 @@ import { User, UserCredential, PendingEmailConfirmation, Role } from '../models/
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import MailerService from '../services/MailerService';
-
+import LimitsService from '../services/LimitsService';
 class AuthService {
 
   static async login({ email, password }) {
@@ -56,15 +56,25 @@ class AuthService {
           },
         ],
       });
+
+      const currentChecksCount = await LimitsService.getCheckCount(user.id);
+      const checkLimit = await LimitsService.getCheckLimit(user.id);
+
       const token = this.createJWT({
         id: user.id,
         email: userData.email,
         fullname: userData.fullname,
         active: userData.active,
         enabled: userData.enabled,
-        role: userData.role.name
+        role: userData.role.name,
+        settings: {
+          checks: {
+            count: currentChecksCount,
+            limit: checkLimit
+          }
+        }
       });
-      return {token};
+      return { token };
     } catch (error) {
       throw error;
     }
@@ -225,7 +235,7 @@ class AuthService {
 
   static createJWT(user) {
     const token = jwt.sign(
-      { id: user.id, email: user.email, fullname: user.fullname, active: user.active, enabled: user.enabled, role: user.role },
+      { id: user.id, email: user.email, fullname: user.fullname, active: user.active, enabled: user.enabled, role: user.role, settings: user.settings },
       process.env.TOKEN_KEY,
       {
         expiresIn: '2h',
