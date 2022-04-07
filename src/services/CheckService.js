@@ -1,6 +1,6 @@
 import axios from 'axios';
 import cron from 'cron';
-import { Checks, CheckLogs, CheckIntegration, Integration, User, Role } from '../models/';
+import { Checks, CheckLogs, CheckIntegration, Integration } from '../models/';
 import TelegramService from './TelegramService';
 import { Op } from 'sequelize';
 import cronTimeTable from '../utils/cronTimeList';
@@ -9,7 +9,7 @@ import MailerService from '../services/MailerService';
 import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
 import LogService from './LogService';
-import PricingService from '../services/PricingService';
+import LimitService from '../services/LimitsService';
 
 let cronJobs = {};
 
@@ -24,7 +24,7 @@ class CheckService {
       userId: newCheck.user.id
     };
 
-    const hasAlreadyReachedMaxChecks = await this.hasAlreadyReachedMaxChecks(newCheck.user.id);
+    const hasAlreadyReachedMaxChecks = await LimitService.hasAlreadyReachedMaxChecks(newCheck.user.id);
     if (hasAlreadyReachedMaxChecks) {
       throw ({ status: 400, message: 'You have reached the maximum number of checks' });
     }
@@ -337,33 +337,6 @@ class CheckService {
       }
     });
     return exits ? true : false;
-  }
-
-  static async hasAlreadyReachedMaxChecks(userId) {
-    const pricings = PricingService.getAll();
-    const user = await User.findOne({
-      where: {
-        id: userId,
-      },
-      include: [
-        {
-          model: Role,
-          attributes: ['name']
-        },
-      ],
-    });
-    const role = pricings.find(pricing => pricing.name.toLowerCase() === user.role.name);
-    
-    if (role) {
-      const limitOfChecks = role.features.find(feature => feature.item.toLowerCase() === 'checks').quantity;
-
-      const currentCheckCount = await Checks.count({
-        where: {
-          userId
-        }
-      });
-      return currentCheckCount >= limitOfChecks;
-    }
   }
 
 }
