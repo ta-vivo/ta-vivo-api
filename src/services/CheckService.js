@@ -8,6 +8,7 @@ import { isValidDomain, isValidIpv4, isValidIpv4WithProtocol } from '../utils/va
 import MailerService from '../services/MailerService';
 import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
+import LogService from './LogService';
 
 let cronJobs = {};
 
@@ -236,12 +237,14 @@ class CheckService {
           status: 'up',
           duration: duration
         });
+        LogService.cleanByRole({check, userId: userId});
       } catch (error) {
         CheckLogs.create({
           checkId: id,
           status: 'down',
           duration: duration
         });
+        LogService.cleanByRole({check, userId: userId});
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
         const message = `🚨 ${target} is down at ${dateTimeString} (UTC)`;
