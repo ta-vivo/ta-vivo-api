@@ -1,4 +1,4 @@
-import { User, Role, Checks } from '../models';
+import { User, Role, Checks, Integration } from '../models';
 import PricingService from './PricingService';
 
 /**
@@ -7,8 +7,7 @@ import PricingService from './PricingService';
  */
 class LimitService {
 
-  static async hasAlreadyReachedMaxChecks(userId) {
-    const pricings = PricingService.getAll();
+  static async getUser (userId) {
     const user = await User.findOne({
       where: {
         id: userId,
@@ -20,6 +19,13 @@ class LimitService {
         },
       ],
     });
+
+    return user;
+  }
+
+  static async hasAlreadyReachedMaxChecks(userId) {
+    const pricings = PricingService.getAll();
+    const user = await this.getUser(userId);
     const role = pricings.find(pricing => pricing.name.toLowerCase() === user.role.name);
 
     if (role) {
@@ -45,21 +51,50 @@ class LimitService {
 
   static async getCheckLimit (userId) {
     const pricings = PricingService.getAll();
-    const user = await User.findOne({
-      where: {
-        id: userId,
-      },
-      include: [
-        {
-          model: Role,
-          attributes: ['name']
-        },
-      ],
-    });
+    const user = await this.getUser(userId);
     const role = pricings.find(pricing => pricing.name.toLowerCase() === user.role.name);
 
     if (role) {
       const limitOfChecks = role.features.find(feature => feature.item.toLowerCase() === 'checks').quantity;
+      return limitOfChecks;
+    }
+
+    return 0;
+  }
+
+  static async hasAlreadyReachedMaxIntegrations (userId) {
+    const pricings = PricingService.getAll();
+    const user = await this.getUser(userId);
+    const role = pricings.find(pricing => pricing.name.toLowerCase() === user.role.name);
+
+    if (role) {
+      const limitOfChecks = role.features.find(feature => feature.item.toLowerCase() === 'integrations').quantity;
+
+      const currentCheckCount = await Integration.count({
+        where: {
+          userId
+        }
+      });
+      return currentCheckCount >= limitOfChecks;
+    }
+  }
+
+  static async getIntegrationCount (userId) {
+    const currentCheckCount = await Integration.count({
+      where: {
+        userId
+      }
+    });
+    return currentCheckCount;
+  }
+
+  static async getIntegrationLimit (userId) {
+    const pricings = PricingService.getAll();
+    const user = await this.getUser(userId);
+    const role = pricings.find(pricing => pricing.name.toLowerCase() === user.role.name);
+
+    if (role) {
+      const limitOfChecks = role.features.find(feature => feature.item.toLowerCase() === 'integrations').quantity;
       return limitOfChecks;
     }
 
