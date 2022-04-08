@@ -57,6 +57,8 @@ class AuthService {
 
       const currentChecksCount = await LimitsService.getCheckCount(user.id);
       const checkLimit = await LimitsService.getCheckLimit(user.id);
+      const currentIntegrationsCount = await LimitsService.getIntegrationCount(user.id);
+      const integrationLimit = await LimitsService.getIntegrationLimit(user.id);
 
       const token = this.createJWT({
         id: user.id,
@@ -69,6 +71,10 @@ class AuthService {
           checks: {
             count: currentChecksCount,
             limit: checkLimit
+          },
+          integrations: {
+            count: currentIntegrationsCount,
+            limit: integrationLimit
           }
         }
       });
