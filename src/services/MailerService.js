@@ -11,31 +11,35 @@ export default class Mailer {
    */
   static async sendMail({ to, subject, body }) {
     try {
-      // create reusable transporter object using the default SMTP transport
-      let transporter = nodemailer.createTransport({
-        host: process.env.MAIL_HOST,
-        port: process.env.MAIL_PORT,
-        secure: false, // true for 465, false for other ports
-        auth: {
-          user: process.env.MAIL_EMAIL, // generated ethereal user
-          pass: process.env.MAIL_PASSWORD, // generated ethereal password
-        },
-        tls: {
-          minVersion: 'TLSv1',
-          rejectUnauthorized: false,
-        },
-      });
+      if (process.env.ENVIRONMENT === 'production') {
+        // create reusable transporter object using the default SMTP transport
+        let transporter = nodemailer.createTransport({
+          host: process.env.MAIL_HOST,
+          port: process.env.MAIL_PORT,
+          secure: false, // true for 465, false for other ports
+          auth: {
+            user: process.env.MAIL_EMAIL, // generated ethereal user
+            pass: process.env.MAIL_PASSWORD, // generated ethereal password
+          },
+          tls: {
+            minVersion: 'TLSv1',
+            rejectUnauthorized: false,
+          },
+        });
 
-      // send mail with defined transport object
-      let info = await transporter.sendMail({
-        from: process.env.MAIL_EMAIL, // sender address
-        to: to, // list of receivers
-        subject: subject, // Subject line
-        text: body, // plain text body
-        html: body, // html body
-      });
+        // send mail with defined transport object
+        let info = await transporter.sendMail({
+          from: process.env.MAIL_EMAIL, // sender address
+          to: to, // list of receivers
+          subject: subject, // Subject line
+          text: body, // plain text body
+          html: body, // html body
+        });
 
-      console.log('Message sent: %s', info.messageId);
+        console.log('Message sent: %s', info.messageId);
+      } else {
+        console.log('⚠️ In "development" mode the email service is disabled');
+      }
     } catch (error) {
       console.log('Problem when trying send email', error);
     }
