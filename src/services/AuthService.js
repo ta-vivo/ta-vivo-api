@@ -31,11 +31,9 @@ class AuthService {
 
       if (user && (await bcrypt.compare(password, userCredentials.password))) {
 
-        const token = this.createJWT({
-          id: user.id, email: email, active: user.active, enabled: user.enabled, role: user.role.name
-        });
+        const response = await this.me({ user });
 
-        return { token: token };
+        return { token: response.token };
       }
       throw ({ status: 400, messages: 'Invalid credentials' });
     } catch (error) {
@@ -175,25 +173,9 @@ class AuthService {
         },
       });
 
-      const updatedUser = await User.findOne({
-        where: { id: user.id },
-        include: [
-          {
-            model: Role,
-            attributes: ['name']
-          },
-        ],
-      });
+      const response = await this.me({user});
 
-      const token = this.createJWT({
-        id: updatedUser.id,
-        email: updatedUser.email,
-        active: updatedUser.active,
-        enabled: updatedUser.enabled,
-        role: updatedUser.role.name
-      });
-
-      return { token };
+      return { token: response.token };
     } catch (error) {
       throw error;
     }
