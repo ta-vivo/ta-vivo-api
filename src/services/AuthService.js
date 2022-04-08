@@ -2,7 +2,7 @@ import { User, UserCredential, PendingEmailConfirmation, Role } from '../models/
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import MailerService from '../services/MailerService';
-
+import LimitsService from '../services/LimitsService';
 class AuthService {
 
   static async login({ email, password }) {
@@ -31,11 +31,9 @@ class AuthService {
 
       if (user && (await bcrypt.compare(password, userCredentials.password))) {
 
-        const token = this.createJWT({
-          id: user.id, email: email, active: user.active, enabled: user.enabled, role: user.role.name
-        });
+        const response = await this.me({ user });
 
-        return { token: token };
+        return { token: response.token };
       }
       throw ({ status: 400, messages: 'Invalid credentials' });
     } catch (error) {
@@ -56,15 +54,25 @@ class AuthService {
           },
         ],
       });
+
+      const currentChecksCount = await LimitsService.getCheckCount(user.id);
+      const checkLimit = await LimitsService.getCheckLimit(user.id);
+
       const token = this.createJWT({
         id: user.id,
         email: userData.email,
         fullname: userData.fullname,
         active: userData.active,
         enabled: userData.enabled,
-        role: userData.role.name
+        role: userData.role.name,
+        settings: {
+          checks: {
+            count: currentChecksCount,
+            limit: checkLimit
+          }
+        }
       });
-      return {token};
+      return { token };
     } catch (error) {
       throw error;
     }
@@ -165,25 +173,9 @@ class AuthService {
         },
       });
 
-      const updatedUser = await User.findOne({
-        where: { id: user.id },
-        include: [
-          {
-            model: Role,
-            attributes: ['name']
-          },
-        ],
-      });
+      const response = await this.me({user});
 
-      const token = this.createJWT({
-        id: updatedUser.id,
-        email: updatedUser.email,
-        active: updatedUser.active,
-        enabled: updatedUser.enabled,
-        role: updatedUser.role.name
-      });
-
-      return { token };
+      return { token: response.token };
     } catch (error) {
       throw error;
     }
@@ -225,7 +217,7 @@ class AuthService {
 
   static createJWT(user) {
     const token = jwt.sign(
-      { id: user.id, email: user.email, fullname: user.fullname, active: user.active, enabled: user.enabled, role: user.role },
+      { id: user.id, email: user.email, fullname: user.fullname, active: user.active, enabled: user.enabled, role: user.role, settings: user.settings },
       process.env.TOKEN_KEY,
       {
         expiresIn: '2h',

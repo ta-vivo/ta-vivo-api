@@ -9,6 +9,7 @@ import MailerService from '../services/MailerService';
 import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
 import LogService from './LogService';
+import LimitService from '../services/LimitsService';
 
 let cronJobs = {};
 
@@ -22,6 +23,11 @@ class CheckService {
       enabled: newCheck.enabled ? newCheck.enabled : false,
       userId: newCheck.user.id
     };
+
+    const hasAlreadyReachedMaxChecks = await LimitService.hasAlreadyReachedMaxChecks(newCheck.user.id);
+    if (hasAlreadyReachedMaxChecks) {
+      throw ({ status: 400, message: 'You have reached the maximum number of checks' });
+    }
 
     // check isValidDomain
     if (!isValidDomain(newCheck.target) && !isValidIpv4(newCheck.target) && !isValidIpv4WithProtocol(newCheck.target)) {
