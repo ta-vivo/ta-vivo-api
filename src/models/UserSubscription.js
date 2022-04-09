@@ -11,6 +11,10 @@ const UserSubscription = sequelize.define('users_subscriptions', {
   type: {
     type: Sequelize.ENUM('paypal', 'stripe'),
   },
+  isActive: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: true
+  },
   // To store extra data like "subscriptionId" for paypal
   data: {
     type: Sequelize.JSON,

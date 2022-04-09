@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import UserSubscription from '../models/UserSubscription';
 import Role from '../models/Role';
 import User from '../models/User';
+import dayjs from 'dayjs';
 class PayPalService {
   static async paypalRequestToken() {
     try {
@@ -56,6 +57,43 @@ class PayPalService {
     }
   }
 
+  static async paypalTransactions({ user }) {
+    try {
+      const subscriptions = await UserSubscription.findAll({
+        where: {
+          userId: user.id,
+          type: 'paypal',
+        }
+      });
+
+      if (!subscriptions) {
+        throw { message: 'Subscription not found', status: 404 };
+      }
+      let data = [];
+      for (let subscription of subscriptions) {
+        const accessToken = await this.generateAccessToken();
+
+        const start_time = dayjs(subscription.createdAt).subtract(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+        const end_time = dayjs().format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+        const response = await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscription.data.subscriptionId}/transactions?start_time=${start_time}&end_time=${end_time}`, {
+          method: 'get',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const responseData = await response.json();
+        if (responseData.transactions) {
+          data = [...data, ...responseData.transactions];
+        }
+      }
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async paypalSubscription({ user, subscriptionId }) {
     try {
       const accessToken = await this.generateAccessToken();
@@ -75,14 +113,20 @@ class PayPalService {
         const newRole = await Role.findOne({ where: { name: plan.name.toLowerCase() } });
 
         await User.update({ roleId: newRole.id }, { where: { id: user.id } });
-        const currentSubscription = await UserSubscription.findOne({
+        const currentSubscriptions = await UserSubscription.findAll({
           where: {
             userId: user.id
           },
         });
 
-        if (currentSubscription) {
-          await currentSubscription.destroy();
+        // Make a sure that there is no other active subscription to prevent multiple subscriptions
+        if (currentSubscriptions) {
+          await currentSubscriptions.forEach(async (subscription) => {
+            if (subscription.type === 'paypal' && subscription.isActive) {
+              await this.paypalSusbcriptionCancel({ user });
+              await subscription.update({ isActive: false });
+            }
+          });
         }
 
         await UserSubscription.create({
@@ -105,7 +149,8 @@ class PayPalService {
       const subscription = await UserSubscription.findOne({
         where: {
           userId: user.id,
-          type: 'paypal'
+          type: 'paypal',
+          isActive: true
         }
       });
 
@@ -129,7 +174,7 @@ class PayPalService {
         const newRole = await Role.findOne({ where: { name: 'basic' } });
 
         await User.update({ roleId: newRole.id }, { where: { id: user.id } });
-        await subscription.destroy();
+        await subscription.update({ isActive: false });
         return { success: true };
       } catch (error) {
         throw error;

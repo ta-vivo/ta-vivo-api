@@ -31,6 +31,20 @@ class PaymentController {
     }
   }
 
+  static async paypalTransactions(req, res) {
+    try {
+      const { user } = req;
+      const transactions = await PaypalService.paypalTransactions({ user });
+
+      return res.json(Response.get('Transactions found', transactions));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
   static async paypalSusbcriptionCancel(req, res) {
     try {
       const { user } = req;
