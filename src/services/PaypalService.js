@@ -82,7 +82,11 @@ class PayPalService {
         },
       });
       const data = await response.json();
-      return data;
+
+      if (data.transactions) {
+        return data.transactions;
+      }
+      return [];
     } catch (error) {
       throw error;
     }
