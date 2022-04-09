@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import UserSubscription from '../models/UserSubscription';
 import Role from '../models/Role';
 import User from '../models/User';
+import dayjs from 'dayjs';
 class PayPalService {
   static async paypalRequestToken() {
     try {
@@ -51,6 +52,37 @@ class PayPalService {
       });
       const data = await response.json();
       return data.plans;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async paypalTransactions({ user }) {
+    try {
+      const subscription = await UserSubscription.findOne({
+        where: {
+          userId: user.id,
+          type: 'paypal',
+        }
+      });
+
+      if (!subscription) {
+        throw { message: 'Subscription not found', status: 404 };
+      }
+
+      const accessToken = await this.generateAccessToken();
+
+      const start_time = dayjs(subscription.createdAt).subtract(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+      const end_time = dayjs().format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+      const response = await fetch(`${process.env.PAYPAL_API}/v1/billing/subscriptions/${subscription.data.subscriptionId}/transactions?start_time=${start_time}&end_time=${end_time}`, {
+        method: 'get',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      return data;
     } catch (error) {
       throw error;
     }
