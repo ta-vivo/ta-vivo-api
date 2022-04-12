@@ -20,6 +20,7 @@ class PricingService {
           { item: 'checks', quantity: 25 },
           { item: 'logsHistory', quantity: '1,000' },
           { item: 'integrations', quantity: 20 },
+          { item: 'checksIntervalUpTo1Minute', quantity: '1 minute' },
         ],
       },
       {
@@ -30,6 +31,7 @@ class PricingService {
           { item: 'checks', quantity: 120 },
           { item: 'logsHistory', quantity: '5,000' },
           { item: 'integrations', quantity: 50 },
+          { item: 'checksIntervalUpTo30Seconds', quantity: '30 seconds' },
         ],
       },
       {
@@ -40,6 +42,7 @@ class PricingService {
           { item: 'checks', quantity: 500 },
           { item: 'logsHistory', quantity: '15,000' },
           { item: 'integrations', quantity: 100 },
+          { item: 'checksIntervalUpTo30Seconds', quantity: '30 seconds' },
         ],
       },
     ];
