@@ -93,7 +93,10 @@ class CheckController {
 
       return res.json(Response.get('Check Updated', updateCheck));
     } catch (error) {
-      return res.json(Response.get('Something goes wrong', error, 500));
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
     }
   }
 
