@@ -23,7 +23,7 @@ class LogService {
         ],
       });
       
-      const limit = rolesLimits.find(role => role.role.toLowerCase() === user.role.name).limit;
+      const limit = rolesLimits.find(role => role.role.toLowerCase() === user.role.name)?.limit;
 
       if (limit) {
         const logs = await CheckLogs.count({
