@@ -1,6 +1,6 @@
 import axios from 'axios';
 import cron from 'cron';
-import { Checks, CheckLogs, CheckIntegration, Integration } from '../models/';
+import { Checks, CheckLogs, CheckIntegration, Integration, Role } from '../models/';
 import TelegramService from './TelegramService';
 import { Op } from 'sequelize';
 import cronTimeTable from '../utils/cronTimeList';
@@ -48,6 +48,11 @@ class CheckService {
       const periodToCheck = cronTimeTable.find(item => item.label === newCheck.periodToCheck).value;
       if (!periodToCheck) {
         throw ({ status: 400, message: 'periodToCheck is not valid' });
+      }
+
+      const userRole = await Role.findOne({ where: { id: newCheck.user.roleId } });
+      if (!cronTimeTable.find(item => item.label === newCheck.periodToCheck).roles.includes(userRole.name)) {
+        throw ({ status: 400, message: 'You are not allowed to create a check with this period' });
       }
 
       const exists = await this.isTargetExists(checkForCreate.target, checkForCreate.userId);
@@ -102,6 +107,11 @@ class CheckService {
       const periodToCheck = cronTimeTable.find(item => item.label === checkForUpdate.periodToCheck);
       if (!periodToCheck) {
         throw ({ status: 400, message: 'periodToCheck is not valid' });
+      }
+
+      const userRole = await Role.findOne({ where: { id: check.user.roleId } });
+      if (!cronTimeTable.find(item => item.label === check.periodToCheck).roles.includes(userRole.name.toLowerCase())) {
+        throw ({ status: 400, message: 'You are not allowed to create a check with this period' });
       }
 
       checkForUpdate.periodToCheck = periodToCheck.value;
@@ -160,7 +170,6 @@ class CheckService {
 
       return checkUpdated;
     } catch (error) {
-      console.log('🚀 ~ file: CheckService.js ~ line 116 ~ CheckService ~ update ~ error', error);
       throw error;
     }
   }
