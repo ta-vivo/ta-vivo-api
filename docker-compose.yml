@@ -7,8 +7,8 @@ services:
       - "traefik.http.routers.ta-vivo-api.entrypoints=websecure"
       - "traefik.http.routers.ta-vivo-api.tls.certresolver=myresolver"
       - "traefik.http.services.ta-vivo-api.loadbalancer.server.port=${PORT}"
-      - "traefik.http.middlewares.ta-vivo-api.ratelimit.average=100"
-      - "traefik.http.middlewares.ta-vivo-api.ratelimit.burst=100"
+      - "traefik.http.middlewares.ta-vivo-api.ratelimit.average=15"
+      - "traefik.http.middlewares.ta-vivo-api.ratelimit.burst=15"
       - "traefik.http.routers.ta-vivo-api.middlewares=ta-vivo-api@docker"
     networks:
       - traefik-network

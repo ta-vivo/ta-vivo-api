@@ -6,6 +6,10 @@ class AuthController {
   static async login(req, res) {
     const { email, password } = req.body;
     try {
+      if (!email || !password) {
+        throw ({message: 'Email and password are required', status: 400});
+      }
+
       const entityCreated = await AuthService.login({ email, password });
       return res.json(Response.get('success', entityCreated));
     } catch (error) {
