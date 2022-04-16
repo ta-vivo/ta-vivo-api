@@ -17,7 +17,6 @@ jobs:
     
     steps:
       # Checks out a copy of your repository on the ubuntu-latest machine
-      - name: Run unit tests
       - uses: actions/checkout@v3
       - name: Use Node.js 16.x
         uses: actions/setup-node@v3
