@@ -1,4 +1,5 @@
-import { User, Role, Checks, Integration, UserSubscription } from '../src/models';
+/* eslint-disable no-undef */
+import { User, Role, Checks, Integration, UserSubscription, PendingEmailConfirmation } from '../src/models';
 import { expect } from 'chai';
 import { checkPropertyExists } from 'sequelize-test-helpers';
 
@@ -10,6 +11,10 @@ describe('src/models/User', () => {
   });
 
   context('associations', () => {
+
+    it('defined a hasOne association with PendingEmailConfirmation', () => {
+      expect(User.hasOne).to.have.been.calledWith(PendingEmailConfirmation);
+    });
 
     it('defined a belongsTo association with Role', () => {
       expect(User.belongsTo).to.have.been.calledWith(Role);
