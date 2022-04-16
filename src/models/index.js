@@ -8,6 +8,7 @@ import CheckNotificationMethod from './CheckNotificationMethod';
 import PendingIntegration from './PendingIntegration';
 import CheckIntegration from './CheckIntegration';
 import PendingEmailConfirmation from './PendingEmailConfirmation';
+import UserSubscription from './UserSubscription';
 
 export {
   User,
@@ -19,5 +20,6 @@ export {
   UserCredential,
   PendingIntegration,
   CheckIntegration,
-  PendingEmailConfirmation
+  PendingEmailConfirmation,
+  UserSubscription
 };
