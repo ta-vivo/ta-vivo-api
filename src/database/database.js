@@ -1,9 +1,11 @@
 import Sequelize from 'sequelize';
 import dotenv from 'dotenv';
+import { sequelize as sequelizeForTest } from 'sequelize-test-helpers';
+
 // Load env file
 dotenv.config();
 
-export const sequelize = new Sequelize(
+export const sequelize = process.env.NODE_ENV === 'test' ? sequelizeForTest : new Sequelize(
   process.env.DATABASE_NAME,
   process.env.DATABASE_USER,
   process.env.DATABASE_PASSWORD,
