@@ -91,13 +91,13 @@ class IntegrationService {
         criterions.where = { userId: user.id };
       }
 
-      const { rows } = await Integration.findAndCountAll({
+      const { rows, count } = await Integration.findAndCountAll({
         ...criterions,
         include: [{
           model: CheckIntegration
         }]
       });
-      return { rows, count: rows.length };
+      return { rows, count: rows.length, total: count };
     } catch (error) {
       throw error;
     }

@@ -178,11 +178,11 @@ class CheckService {
     const { criterions } = params;
 
     try {
-      const { rows } = await Checks.findAndCountAll({
+      const { rows, count } = await Checks.findAndCountAll({
         ...criterions,
         include: [{ model: CheckIntegration, include: [{ model: Integration }] }]
       });
-      return { rows, count: rows.length };
+      return { rows, count: rows.length, total: count };
     } catch (error) {
       throw error;
     }
