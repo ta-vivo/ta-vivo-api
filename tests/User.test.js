@@ -1,4 +1,4 @@
-import { User, Role, Checks } from '../src/models';
+import { User, Role, Checks, Integration, UserSubscription } from '../src/models';
 import { expect } from 'chai';
 import { checkPropertyExists } from 'sequelize-test-helpers';
 
@@ -15,8 +15,11 @@ describe('src/models/User', () => {
       expect(User.belongsTo).to.have.been.calledWith(Role);
     });
 
-    it('defined a hasMany association with User as \'checks\'', () => {
-      expect(User.hasMany).to.have.been.calledWith(Checks);
+    it('defined a hasMany association with User \'checks, Integration, UserSubscription\'', () => {
+      expect(User.hasMany).to.have.been
+        .calledWith(Checks)
+        .calledWith(Integration)
+        .calledWith(UserSubscription);
     });
   });
 
