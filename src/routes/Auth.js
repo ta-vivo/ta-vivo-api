@@ -9,5 +9,6 @@ router.post('/register', AuthController.register);
 router.get('/me', verifyToken, AuthController.me);
 router.post('/register-email-confirmation', verifyToken, AuthController.registerEmailConfirmation);
 router.get('/request-register-email-confirmation', verifyToken, AuthController.requestRegisterEmailConfirmation);
+router.post('/change-password', verifyToken, AuthController.changePassword);
 
 export default router;
