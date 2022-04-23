@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import MailerService from '../services/MailerService';
 import LimitsService from '../services/LimitsService';
+import { v4 as uuidv4 } from 'uuid';
 class AuthService {
 
   static async login({ email, password }) {
@@ -263,7 +264,7 @@ class AuthService {
         return {};
       }
 
-      const uniqueCode = `${user.id}${Math.random().toString(36).substring(2, 7)}`;
+      const uniqueCode = uuidv4();
 
       await PendingEmailConfirmation.create({
         userId: user.id,
@@ -289,6 +290,55 @@ class AuthService {
       `;
 
       MailerService.sendMail({ to: email, subject: 'Password reset', body: emailBody });
+      return {};
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async recoverPassword({ email, uniqueCode, password }) {
+    try {
+      if (!this.isPasswordSecure(password)) {
+        throw ({ message: 'Password must be at least 8 characters long and contain at least one number, one uppercase and one lowercase letter', status: 400 });
+      }
+
+      const user = await User.findOne({
+        where: {
+          email: email,
+        },
+      });
+
+      if (!user) {
+        throw ({ status: 400, message: 'Invalid email' });
+      }
+
+      const pendingEmailConfirmation = await PendingEmailConfirmation.findOne({
+        where: {
+          uniqueCode: uniqueCode,
+          userId: user.id,
+        },
+      });
+
+      if (!pendingEmailConfirmation) {
+        throw ({ status: 400, message: 'Invalid code' });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await UserCredential.update({
+        password: hashedPassword,
+      }, {
+        where: {
+          userId: user.id,
+        },
+      });
+
+      await PendingEmailConfirmation.destroy({
+        where: {
+          userId: user.id,
+        },
+      });
+
       return {};
     } catch (error) {
       throw error;
