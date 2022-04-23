@@ -103,6 +103,49 @@ class AuthController {
     }
   }
 
+  static async forgotPassword(req, res) {
+    const { email } = req.body;
+    try {
+      await AuthService.forgotPassword({ email });
+      /**
+       * Ensure that responses return in a consistent amount of time to prevent an attacker enumerating which accounts exist.
+       * https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html#forgot-password-request
+       */
+      setTimeout(() => {
+        return res.json(Response.get('success', {}));
+      }, 5000);
+
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
+  static async recoverPassword(req, res) {
+    const { email, uniqueCode, password, confirmPassword } = req.body;
+    try {
+      if (!email || !uniqueCode || !password || !confirmPassword) {
+        throw ({ message: 'Email, unique code, password and confirm password are required', status: 400 });
+      }
+
+      if (password !== confirmPassword) {
+        throw ({ message: 'Password and confirm password must be the same', status: 400 });
+      }
+
+      const user = await AuthService.recoverPassword({
+        uniqueCode, password, email
+      });
+      return res.json(Response.get('success', user));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
 }
 
 export default AuthController;
