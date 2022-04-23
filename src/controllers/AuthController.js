@@ -11,7 +11,10 @@ class AuthController {
       }
 
       const entityCreated = await AuthService.login({ email, password });
-      return res.json(Response.get('success', entityCreated));
+
+      setTimeout(() => {
+        return res.json(Response.get('success', entityCreated));
+      }, 2000);
     } catch (error) {
       res.status(error.status || 500).json({
         message: error.message || 'Something goes wrong',
