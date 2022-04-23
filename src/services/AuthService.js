@@ -152,6 +152,36 @@ class AuthService {
     }
   }
 
+  static async changePassword({ user, oldPassword, newPassword }) {
+    try {
+
+      if (this.isPasswordSecure(newPassword) === false) {
+        throw ({ message: 'Password must be at least 8 characters long and contain at least one number, one uppercase and one lowercase letter', status: 400 });
+      }
+
+      const userCredentials = await UserCredential.findOne({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      if (userCredentials && (await bcrypt.compare(oldPassword, userCredentials.password))) {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await UserCredential.update({
+          password: hashedPassword,
+        }, {
+          where: {
+            userId: user.id,
+          },
+        });
+        return { success: true };
+      }
+      throw ({ status: 400, message: 'Invalid credentials' });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async registerEmailConfirmation({ user, uniqueCode }) {
     try {
       const pendingEmailConfirmation = await PendingEmailConfirmation.findOne({
@@ -179,7 +209,7 @@ class AuthService {
         },
       });
 
-      const response = await this.me({user});
+      const response = await this.me({ user });
 
       return { token: response.token };
     } catch (error) {
@@ -231,6 +261,12 @@ class AuthService {
     );
 
     return token;
+  }
+
+
+  static isPasswordSecure(password) {
+    const regex = /^(?=.*[a-z])(?=.*[0-9])(?=.{8,})/;
+    return regex.test(password);
   }
 
 }

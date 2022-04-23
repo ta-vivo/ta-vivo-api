@@ -7,7 +7,7 @@ class AuthController {
     const { email, password } = req.body;
     try {
       if (!email || !password) {
-        throw ({message: 'Email and password are required', status: 400});
+        throw ({ message: 'Email and password are required', status: 400 });
       }
 
       const entityCreated = await AuthService.login({ email, password });
@@ -38,6 +38,35 @@ class AuthController {
   static async me(req, res) {
     try {
       const user = await AuthService.me({ user: req.user });
+      return res.json(Response.get('success', user));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
+  static async changePassword(req, res) {
+    const { oldPassword, password, confirmPassword } = req.body;
+    try {
+      if (!oldPassword || !password || !confirmPassword) {
+        throw ({ message: 'Old password, password and confirm password are required', status: 400 });
+      }
+
+      if (password !== confirmPassword) {
+        throw ({ message: 'Password and confirm password must be the same', status: 400 });
+      }
+
+      if (password === oldPassword) {
+        throw ({ message: 'New password must be different from old password', status: 400 });
+      }
+
+      const user = await AuthService.changePassword({
+        user: req.user,
+        oldPassword,
+        newPassword: password
+      });
       return res.json(Response.get('success', user));
     } catch (error) {
       res.status(error.status || 500).json({
