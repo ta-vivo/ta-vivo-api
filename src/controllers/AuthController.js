@@ -103,6 +103,19 @@ class AuthController {
     }
   }
 
+  static async forgotPassword(req, res) {
+    const { email } = req.body;
+    try {
+      await AuthService.forgotPassword({ email });
+      return res.json(Response.get('success', {}));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
 }
 
 export default AuthController;
