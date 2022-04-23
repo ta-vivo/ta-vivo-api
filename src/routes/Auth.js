@@ -11,5 +11,6 @@ router.post('/register-email-confirmation', verifyToken, AuthController.register
 router.get('/request-register-email-confirmation', verifyToken, AuthController.requestRegisterEmailConfirmation);
 router.post('/change-password', verifyToken, AuthController.changePassword);
 router.post('/forgot-password', AuthController.forgotPassword);
+router.post('/recover-password', AuthController.recoverPassword);
 
 export default router;
