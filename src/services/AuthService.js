@@ -251,6 +251,50 @@ class AuthService {
     }
   }
 
+  static async forgotPassword({ email }) {
+    try {
+      const user = await User.findOne({
+        where: {
+          email: email,
+        },
+      });
+
+      if (!user) {
+        return {};
+      }
+
+      const uniqueCode = `${user.id}${Math.random().toString(36).substring(2, 7)}`;
+
+      await PendingEmailConfirmation.create({
+        userId: user.id,
+        uniqueCode: uniqueCode,
+      });
+
+      const emailBody = `
+      <div style="text-align: center;">
+        <h1>Verification code</h1>
+        <p style="font-size: 30px; letter-spacing: 10px">
+          ${uniqueCode}
+        </p>
+        <div>
+          Here is your password reset code.
+        </div>
+        <div>
+          It will expire in 10 minutes.
+        </div>
+        <p>
+          Sent by Ta-vivo.
+        </p>
+      </div>
+      `;
+
+      MailerService.sendMail({ to: email, subject: 'Password reset', body: emailBody });
+      return {};
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static createJWT(user) {
     const token = jwt.sign(
       { id: user.id, email: user.email, fullname: user.fullname, active: user.active, enabled: user.enabled, role: user.role, settings: user.settings },
