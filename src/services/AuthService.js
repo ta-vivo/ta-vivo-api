@@ -36,7 +36,7 @@ class AuthService {
 
         return { token: response.token };
       }
-      throw ({ status: 400, messages: 'Invalid credentials' });
+      throw ({ status: 400, message: 'Invalid email or password' });
     } catch (error) {
       throw error;
     }
