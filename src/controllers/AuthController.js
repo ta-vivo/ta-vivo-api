@@ -107,7 +107,14 @@ class AuthController {
     const { email } = req.body;
     try {
       await AuthService.forgotPassword({ email });
-      return res.json(Response.get('success', {}));
+      /**
+       * Ensure that responses return in a consistent amount of time to prevent an attacker enumerating which accounts exist.
+       * https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html#forgot-password-request
+       */
+      setTimeout(() => {
+        return res.json(Response.get('success', {}));
+      }, 5000);
+
     } catch (error) {
       res.status(error.status || 500).json({
         message: error.message || 'Something goes wrong',
