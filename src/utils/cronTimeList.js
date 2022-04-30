@@ -28,7 +28,7 @@ export default [
     roles: ['basic', 'pro', 'enterprise', 'enterprise+', 'administrator']
   },
   {
-    label: '2h', value: '* */2 * * *',
+    label: '2h', value: '0 */2 * * *',
     roles: ['basic', 'pro', 'enterprise', 'enterprise+', 'administrator']
   },
   {
