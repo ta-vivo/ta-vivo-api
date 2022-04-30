@@ -24,15 +24,15 @@ export default [
     roles: ['basic', 'pro', 'enterprise', 'enterprise+', 'administrator']
   },
   {
-    label: '1h', value: '* */1 * * *',
+    label: '1h', value: '0 */1 * * *',
     roles: ['basic', 'pro', 'enterprise', 'enterprise+', 'administrator']
   },
   {
-    label: '2h', value: '* */2 * * *',
+    label: '2h', value: '0 */2 * * *',
     roles: ['basic', 'pro', 'enterprise', 'enterprise+', 'administrator']
   },
   {
-    label: '12h', value: '* */12 * * *',
+    label: '12h', value: '0 */12 * * *',
     roles: ['basic', 'pro', 'enterprise', 'enterprise+', 'administrator']
   },
 ];
