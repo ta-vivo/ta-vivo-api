@@ -35,11 +35,15 @@ class SlackService {
   }
 
   static async sendMessage(message, channelId) {
-    await app.client.chat.postMessage({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: channelId,
-      text: message
-    });
+    try {
+      await app.client.chat.postMessage({
+        token: process.env.SLACK_BOT_TOKEN,
+        channel: channelId,
+        text: message
+      });
+    } catch (error) {
+      console.log('🚀 ~ file: SlackService.js ~ line 45 ~ SlackService ~ sendMessage ~ error', error);
+    }
   }
 
 }

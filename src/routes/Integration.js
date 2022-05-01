@@ -9,6 +9,7 @@ router.post('/', verifyToken, IntegrationController.create);
 router.post('/slack', verifyToken, IntegrationController.createSlack);
 router.post('/discord', verifyToken, IntegrationController.createDiscord);
 router.post('/request-email-code', verifyToken, IntegrationController.requestEmailConfirmation);
+router.post('/test', verifyToken, IntegrationController.test);
 router.put('/:id', verifyToken, IntegrationController.update);
 router.delete('/:id', verifyToken, IntegrationController.delete);
 
