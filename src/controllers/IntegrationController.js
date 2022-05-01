@@ -103,6 +103,21 @@ class IntegrationsController {
     }
   }
 
+  static async test(req, res) {
+    try {
+      const { id } = req.body;
+      const { user } = req;
+
+      await IntegrationService.test({ id, user });
+      return res.json(Response.get('Integration tested', {}));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
   static async delete(req, res) {
     try {
       await IntegrationService.delete({ id: req.params.id, user: req.user });
