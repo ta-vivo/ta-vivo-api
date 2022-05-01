@@ -48,12 +48,16 @@ class discordService {
   }
 
   static async sendMessage(webhookId, webhookToken, message) {
-    const webhookClient = new WebhookClient({ id: webhookId, token: webhookToken });
+    try {
+      const webhookClient = new WebhookClient({ id: webhookId, token: webhookToken });
 
-    webhookClient.send({
-      content: message,
-      username: 'Ta-vivo'
-    });
+      webhookClient.send({
+        content: message,
+        username: 'Ta-vivo'
+      });
+    } catch (error) {
+      console.log('🚀 ~ file: DiscordService.js ~ line 59 ~ discordService ~ sendMessage ~ error', error);
+    }
   }
 
 }
