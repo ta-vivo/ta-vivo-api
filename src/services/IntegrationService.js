@@ -1,5 +1,8 @@
 import { Integration, PendingIntegration, CheckIntegration } from '../models';
 import MailerService from '../services/MailerService';
+import TelegramService from '../services/TelegramService';
+import SlackService from '../services/SlackService';
+import discordService from '../services/DiscordService';
 class IntegrationService {
 
   static async requestEmailConfirmation({ email, user }) {
@@ -98,6 +101,51 @@ class IntegrationService {
         }]
       });
       return { rows, count: rows.length, total: count };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async test({ id, user }) {
+    try {
+      const integration = await Integration.findOne({ where: { id: id, userId: user.id } });
+
+      if (!integration) {
+        throw ({ status: 400, message: 'Integration not found' });
+      }
+
+      const message = 'This is a test, everything is fine. ✅';
+
+      if (integration.type === 'telegram') {
+        TelegramService.sendMessage({
+          userId: integration.appUserId,
+          message: message
+        });
+      } else if (integration.type === 'email') {
+        try {
+          MailerService.sendMail({
+            to: integration.name,
+            subject: message,
+            body: message
+          });
+        } catch (error) {
+          console.log('🚨 failed to send email', error);
+        }
+      } else if (integration.type === 'slack') {
+        try {
+          SlackService.sendMessage(message, integration.appUserId);
+        } catch (error) {
+          console.log('🚨 failed to send slack', error);
+        }
+      } else if (integration.type === 'discord') {
+        try {
+          discordService.sendMessage(integration.appUserId, integration.data.token, message);
+        } catch (error) {
+          console.log('🚨 failed to send discord', error);
+        }
+      }
+
+      return { success: true };
     } catch (error) {
       throw error;
     }
