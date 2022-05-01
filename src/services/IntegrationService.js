@@ -114,7 +114,7 @@ class IntegrationService {
         throw ({ status: 400, message: 'Integration not found' });
       }
 
-      const message = 'This is a test, everything is fine. ✅';
+      const message = 'This is a TEST, everything is fine. ✅';
 
       if (integration.type === 'telegram') {
         TelegramService.sendMessage({
