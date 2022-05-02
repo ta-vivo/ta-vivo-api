@@ -33,6 +33,9 @@ class AuthService {
       if (user && (await bcrypt.compare(password, userCredentials.password))) {
 
         const response = await this.me({ user });
+        await user.update({
+          lastLogin: new Date(),
+        });
 
         return { token: response.token };
       }
