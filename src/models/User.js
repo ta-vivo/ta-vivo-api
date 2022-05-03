@@ -28,6 +28,11 @@ const User = sequelize.define('users', {
     allowNull: false,
     defaultValue: false
   },
+  lastLogin: {
+    type: Sequelize.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.NOW
+  }
 }, {});
 
 export default User;
