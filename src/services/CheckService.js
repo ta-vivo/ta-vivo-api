@@ -262,7 +262,8 @@ class CheckService {
           timeout: 5000
         });
         duration = (performance.now() - durationStart).toFixed(5);
-        console.log(`✅ ${target} is alive at ${dateTimeString}`);
+        const successMessage = `✅ ${target} is alive at ${dateTimeString} (UTC)`;
+        console.log(successMessage);
         CheckLogs.create({
           checkId: id,
           status: 'up',
@@ -271,7 +272,8 @@ class CheckService {
         LogService.cleanByRole({ check, userId: userId });
 
         if (isRetry) {
-          // Todo send notification
+          const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
+          this.sendNotification({ message: successMessage, checkIntegrations: mostUpdatedCheck.check_integrations });
           this.stopCheck(check, `${check.id}_retry`);
         }
       } catch (error) {
@@ -290,36 +292,7 @@ class CheckService {
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
         const message = isRetry ? `🚨 ${target} still down at ${dateTimeString} (UTC)` : `🚨 ${target} is down at ${dateTimeString} (UTC)`;
 
-        mostUpdatedCheck.check_integrations.forEach(async (integrationCheck) => {
-          if (integrationCheck.integration.type === 'telegram') {
-            TelegramService.sendMessage({
-              userId: integrationCheck.integration.appUserId,
-              message: message
-            });
-          } else if (integrationCheck.integration.type === 'email') {
-            try {
-              MailerService.sendMail({
-                to: integrationCheck.integration.name,
-                subject: message,
-                body: message
-              });
-            } catch (error) {
-              console.log('🚨 failed to send email', error);
-            }
-          } else if (integrationCheck.integration.type === 'slack') {
-            try {
-              SlackService.sendMessage(message, integrationCheck.integration.appUserId);
-            } catch (error) {
-              console.log('🚨 failed to send slack', error);
-            }
-          } else if (integrationCheck.integration.type === 'discord') {
-            try {
-              discordService.sendMessage(integrationCheck.integration.appUserId, integrationCheck.integration.data.token, message);
-            } catch (error) {
-              console.log('🚨 failed to send discord', error);
-            }
-          }
-        });
+        this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
         console.log(`🔥 send alert for ${target} at ${dateTimeString}`);
       }
     });
@@ -329,17 +302,17 @@ class CheckService {
   }
 
 
-/**
- * It stops the cron job for the given check
- * @param check - the check object
- * @param [customId=null] - This is the id of the check that we want to stop. can be only the check id or 
- * a custom key like `1_retry`
- */
+  /**
+   * It stops the cron job for the given check
+   * @param check - the check object
+   * @param [customId=null] - This is the id of the check that we want to stop. can be only the check id or 
+   * a custom key like `1_retry`
+   */
   static stopCheck(check, customId = null) {
     const id = customId || check.id;
     const cronJob = cronJobs[id];
     if (cronJob) {
-      console.log(`stop cron job for ${check.target}`);
+      console.log(`stop cron job for ${check.target} - id: ${id}`);
       cronJob.stop();
     }
   }
@@ -385,6 +358,39 @@ class CheckService {
       }
     });
     return exits ? true : false;
+  }
+
+  static async sendNotification({ message, checkIntegrations }) {
+    checkIntegrations.forEach(async (integrationCheck) => {
+      if (integrationCheck.integration.type === 'telegram') {
+        TelegramService.sendMessage({
+          userId: integrationCheck.integration.appUserId,
+          message: message
+        });
+      } else if (integrationCheck.integration.type === 'email') {
+        try {
+          MailerService.sendMail({
+            to: integrationCheck.integration.name,
+            subject: message,
+            body: message
+          });
+        } catch (error) {
+          console.log('🚨 failed to send email', error);
+        }
+      } else if (integrationCheck.integration.type === 'slack') {
+        try {
+          SlackService.sendMessage(message, integrationCheck.integration.appUserId);
+        } catch (error) {
+          console.log('🚨 failed to send slack', error);
+        }
+      } else if (integrationCheck.integration.type === 'discord') {
+        try {
+          discordService.sendMessage(integrationCheck.integration.appUserId, integrationCheck.integration.data.token, message);
+        } catch (error) {
+          console.log('🚨 failed to send discord', error);
+        }
+      }
+    });
   }
 
 }
