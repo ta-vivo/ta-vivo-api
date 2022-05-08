@@ -248,7 +248,7 @@ class CheckService {
     }
   }
 
-  static runCheck(check) {
+  static runCheck(check, isRetry = false) {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
       const { id, target, userId } = check;
@@ -269,6 +269,11 @@ class CheckService {
           duration: duration
         });
         LogService.cleanByRole({ check, userId: userId });
+
+        if (isRetry) {
+          // Todo send notification
+          this.stopCheck(check, `${check.id}_retry`);
+        }
       } catch (error) {
         CheckLogs.create({
           checkId: id,
@@ -277,8 +282,13 @@ class CheckService {
         });
         LogService.cleanByRole({ check, userId: userId });
 
+        if (check.retryOnFail && !cronJobs[`${id}_retry`] && !isRetry) {
+          console.log('Retry cron job for check: ', check.name);
+          this.runCheck({ ...check, periodToCheck: check.onFailPeriodToCheck }, true);
+        }
+
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
-        const message = `🚨 ${target} is down at ${dateTimeString} (UTC)`;
+        const message = isRetry ? `🚨 ${target} still down at ${dateTimeString} (UTC)` : `🚨 ${target} is down at ${dateTimeString} (UTC)`;
 
         mostUpdatedCheck.check_integrations.forEach(async (integrationCheck) => {
           if (integrationCheck.integration.type === 'telegram') {
@@ -313,12 +323,21 @@ class CheckService {
         console.log(`🔥 send alert for ${target} at ${dateTimeString}`);
       }
     });
-    cronJobs = { ...cronJobs, [check.id]: cronJob };
+    const id = isRetry ? `${check.id}_retry` : check.id;
+    cronJobs = { ...cronJobs, [id]: cronJob };
     cronJob.start();
   }
 
-  static stopCheck(check) {
-    const cronJob = cronJobs[check.id];
+
+/**
+ * It stops the cron job for the given check
+ * @param check - the check object
+ * @param [customId=null] - This is the id of the check that we want to stop. can be only the check id or 
+ * a custom key like `1_retry`
+ */
+  static stopCheck(check, customId = null) {
+    const id = customId || check.id;
+    const cronJob = cronJobs[id];
     if (cronJob) {
       console.log(`stop cron job for ${check.target}`);
       cronJob.stop();
