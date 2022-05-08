@@ -113,10 +113,31 @@ class CheckService {
       const checkForUpdate = {
         target: check.target,
         periodToCheck: check.periodToCheck,
-        enabled: check.enabled ? check.enabled : false,
-        retryOnFail: check.retryOnFail ? check.retryOnFail : false,
-        onFailPeriodToCheck: check.onFailPeriodToCheck ? check.onFailPeriodToCheck : null,
+        enabled: check.enabled ? check.enabled : false
       };
+
+      let currentCheck = await Checks.findOne({ where: { id } });
+
+      if (!currentCheck) {
+        throw ({ status: 404, message: 'Check not found' });
+      }
+      
+      // eslint-disable-next-line no-prototype-builtins
+      if (check.hasOwnProperty('retryOnFail')) {
+
+        if (!cronTimeTable.find(item => item.label === check.onFailPeriodToCheck)) {
+          throw ({ status: 400, message: 'onFailPeriodToCheck is not valid' });
+        }
+
+        const onFailPeriodToCheck = cronTimeTable.find(item => item.label === check.onFailPeriodToCheck).value;
+        if (!onFailPeriodToCheck) {
+          throw ({ status: 400, message: 'onFailPeriodToCheck is not valid' });
+        }
+
+        checkForUpdate.retryOnFail = check.retryOnFail;
+        checkForUpdate.onFailPeriodToCheck = onFailPeriodToCheck;
+        checkForUpdate.onFailPeriodToCheckLabel = cronTimeTable.find(item => item.label === check.onFailPeriodToCheck).label;
+      }
 
       if (check.name) {
         checkForUpdate.name = check.name;
@@ -134,8 +155,7 @@ class CheckService {
 
       checkForUpdate.periodToCheck = periodToCheck.value;
       checkForUpdate.periodToCheckLabel = periodToCheck.label;
-
-      let currentCheck = await Checks.findOne({ where: { id } });
+      
       currentCheck = JSON.parse(JSON.stringify(currentCheck));
 
       await Checks.update(checkForUpdate, { where: { id: id } });
