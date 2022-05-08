@@ -113,7 +113,9 @@ class CheckService {
       const checkForUpdate = {
         target: check.target,
         periodToCheck: check.periodToCheck,
-        enabled: check.enabled ? check.enabled : false
+        enabled: check.enabled ? check.enabled : false,
+        retryOnFail: check.retryOnFail ? check.retryOnFail : false,
+        onFailPeriodToCheck: check.onFailPeriodToCheck ? check.onFailPeriodToCheck : null,
       };
 
       if (check.name) {
@@ -177,6 +179,7 @@ class CheckService {
 
       if (requireStopCron) {
         this.stopCheck(checkUpdated);
+        this.stopCheck(checkUpdated, true);
       }
 
       if (checkUpdated.enabled && requireUpdateCron) {
@@ -242,6 +245,7 @@ class CheckService {
       });
       // stop cron job
       this.stopCheck(check);
+      this.stopCheck(check, true);
       return { count: rowCount };
     } catch (error) {
       throw error;
