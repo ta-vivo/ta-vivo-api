@@ -21,7 +21,10 @@ class CheckService {
       target: newCheck.target,
       periodToCheck: newCheck.periodToCheck,
       enabled: newCheck.enabled ? newCheck.enabled : false,
-      userId: newCheck.user.id
+      userId: newCheck.user.id,
+      retryOnFail: newCheck.retryOnFail ? newCheck.retryOnFail : false,
+      onFailPeriodToCheck: newCheck.onFailPeriodToCheck ? newCheck.onFailPeriodToCheck : null,
+      onFailperiodToCheckLabel: newCheck.onFailperiodToCheckLabel ? newCheck.onFailperiodToCheckLabel : null
     };
 
     const hasAlreadyReachedMaxChecks = await LimitService.hasAlreadyReachedMaxChecks(newCheck.user.id);
@@ -58,6 +61,19 @@ class CheckService {
       const exists = await this.isTargetExists(checkForCreate.target, checkForCreate.userId);
       if (exists) {
         throw ({ status: 400, message: 'Target already exists' });
+      }
+
+      if (checkForCreate.retryOnFail) {
+        if (!cronTimeTable.find(item => item.label === newCheck.onFailPeriodToCheck)) {
+          throw ({ status: 400, message: 'onFailPeriodToCheck is not valid' });
+        }
+
+        const onFailPeriodToCheck = cronTimeTable.find(item => item.label === newCheck.onFailPeriodToCheck).value;
+        if (!onFailPeriodToCheck) {
+          throw ({ status: 400, message: 'onFailPeriodToCheck is not valid' });
+        }
+        checkForCreate.onFailPeriodToCheck = onFailPeriodToCheck;
+        checkForCreate.onFailPeriodToCheckLabel = cronTimeTable.find(item => item.label === newCheck.onFailPeriodToCheck).label;
       }
 
       checkForCreate.periodToCheck = periodToCheck;
@@ -252,14 +268,14 @@ class CheckService {
           status: 'up',
           duration: duration
         });
-        LogService.cleanByRole({check, userId: userId});
+        LogService.cleanByRole({ check, userId: userId });
       } catch (error) {
         CheckLogs.create({
           checkId: id,
           status: 'down',
           duration: duration
         });
-        LogService.cleanByRole({check, userId: userId});
+        LogService.cleanByRole({ check, userId: userId });
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
         const message = `🚨 ${target} is down at ${dateTimeString} (UTC)`;
@@ -310,13 +326,17 @@ class CheckService {
   }
 
   static async addIntegrations(checkId, integrations) {
-    const integrationsToAdd = integrations.map(integration => {
-      return {
-        checkId: checkId,
-        integrationId: integration.id
-      };
-    });
-    await CheckIntegration.bulkCreate(integrationsToAdd);
+    try {
+      const integrationsToAdd = integrations.map(integration => {
+        return {
+          checkId: checkId,
+          integrationId: integration.id
+        };
+      });
+      await CheckIntegration.bulkCreate(integrationsToAdd);
+    } catch (error) {
+      console.log(error);
+    }
     return;
   }
 
