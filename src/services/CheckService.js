@@ -21,7 +21,10 @@ class CheckService {
       target: newCheck.target,
       periodToCheck: newCheck.periodToCheck,
       enabled: newCheck.enabled ? newCheck.enabled : false,
-      userId: newCheck.user.id
+      userId: newCheck.user.id,
+      retryOnFail: newCheck.retryOnFail ? newCheck.retryOnFail : false,
+      onFailPeriodToCheck: newCheck.onFailPeriodToCheck ? newCheck.onFailPeriodToCheck : null,
+      onFailperiodToCheckLabel: newCheck.onFailperiodToCheckLabel ? newCheck.onFailperiodToCheckLabel : null
     };
 
     const hasAlreadyReachedMaxChecks = await LimitService.hasAlreadyReachedMaxChecks(newCheck.user.id);
@@ -58,6 +61,25 @@ class CheckService {
       const exists = await this.isTargetExists(checkForCreate.target, checkForCreate.userId);
       if (exists) {
         throw ({ status: 400, message: 'Target already exists' });
+      }
+
+      if (userRole.name.toLowerCase() === 'basic') {
+        delete checkForCreate.retryOnFail;
+        delete checkForCreate.onFailPeriodToCheck;
+        delete checkForCreate.onFailperiodToCheckLabel;
+      }
+
+      if (checkForCreate.retryOnFail) {
+        if (!cronTimeTable.find(item => item.label === newCheck.onFailPeriodToCheck)) {
+          throw ({ status: 400, message: 'onFailPeriodToCheck is not valid' });
+        }
+
+        const onFailPeriodToCheck = cronTimeTable.find(item => item.label === newCheck.onFailPeriodToCheck).value;
+        if (!onFailPeriodToCheck) {
+          throw ({ status: 400, message: 'onFailPeriodToCheck is not valid' });
+        }
+        checkForCreate.onFailPeriodToCheck = onFailPeriodToCheck;
+        checkForCreate.onFailPeriodToCheckLabel = cronTimeTable.find(item => item.label === newCheck.onFailPeriodToCheck).label;
       }
 
       checkForCreate.periodToCheck = periodToCheck;
@@ -100,6 +122,40 @@ class CheckService {
         enabled: check.enabled ? check.enabled : false
       };
 
+      let currentCheck = await Checks.findOne({ where: { id } });
+
+      if (!currentCheck) {
+        throw ({ status: 404, message: 'Check not found' });
+      }
+
+      const userRole = await Role.findOne({ where: { id: check.user.roleId } });
+      if (!cronTimeTable.find(item => item.label === check.periodToCheck).roles.includes(userRole.name.toLowerCase())) {
+        throw ({ status: 400, message: 'You are not allowed to create a check with this period' });
+      }
+
+      if (userRole.name.toLowerCase() === 'basic') {
+        delete checkForUpdate.retryOnFail;
+        delete checkForUpdate.onFailPeriodToCheck;
+        delete checkForUpdate.onFailperiodToCheckLabel;
+      }
+      
+      // eslint-disable-next-line no-prototype-builtins
+      if (check.hasOwnProperty('retryOnFail')) {
+
+        if (!cronTimeTable.find(item => item.label === check.onFailPeriodToCheck)) {
+          throw ({ status: 400, message: 'onFailPeriodToCheck is not valid' });
+        }
+
+        const onFailPeriodToCheck = cronTimeTable.find(item => item.label === check.onFailPeriodToCheck).value;
+        if (!onFailPeriodToCheck) {
+          throw ({ status: 400, message: 'onFailPeriodToCheck is not valid' });
+        }
+
+        checkForUpdate.retryOnFail = check.retryOnFail;
+        checkForUpdate.onFailPeriodToCheck = onFailPeriodToCheck;
+        checkForUpdate.onFailPeriodToCheckLabel = cronTimeTable.find(item => item.label === check.onFailPeriodToCheck).label;
+      }
+
       if (check.name) {
         checkForUpdate.name = check.name;
       }
@@ -109,15 +165,9 @@ class CheckService {
         throw ({ status: 400, message: 'periodToCheck is not valid' });
       }
 
-      const userRole = await Role.findOne({ where: { id: check.user.roleId } });
-      if (!cronTimeTable.find(item => item.label === check.periodToCheck).roles.includes(userRole.name.toLowerCase())) {
-        throw ({ status: 400, message: 'You are not allowed to create a check with this period' });
-      }
-
       checkForUpdate.periodToCheck = periodToCheck.value;
       checkForUpdate.periodToCheckLabel = periodToCheck.label;
-
-      let currentCheck = await Checks.findOne({ where: { id } });
+      
       currentCheck = JSON.parse(JSON.stringify(currentCheck));
 
       await Checks.update(checkForUpdate, { where: { id: id } });
@@ -161,6 +211,7 @@ class CheckService {
 
       if (requireStopCron) {
         this.stopCheck(checkUpdated);
+        this.stopCheck(checkUpdated, true);
       }
 
       if (checkUpdated.enabled && requireUpdateCron) {
@@ -226,13 +277,14 @@ class CheckService {
       });
       // stop cron job
       this.stopCheck(check);
+      this.stopCheck(check, true);
       return { count: rowCount };
     } catch (error) {
       throw error;
     }
   }
 
-  static runCheck(check) {
+  static runCheck(check, isRetry = false) {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
       const { id, target, userId } = check;
@@ -246,77 +298,73 @@ class CheckService {
           timeout: 5000
         });
         duration = (performance.now() - durationStart).toFixed(5);
-        console.log(`✅ ${target} is alive at ${dateTimeString}`);
+        const successMessage = `✅ ${target} is alive at ${dateTimeString} (UTC)`;
+        console.log(successMessage);
         CheckLogs.create({
           checkId: id,
           status: 'up',
           duration: duration
         });
-        LogService.cleanByRole({check, userId: userId});
+        LogService.cleanByRole({ check, userId: userId });
+
+        if (isRetry) {
+          const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
+          this.sendNotification({ message: successMessage, checkIntegrations: mostUpdatedCheck.check_integrations });
+          this.stopCheck(check, `${check.id}_retry`);
+        }
       } catch (error) {
         CheckLogs.create({
           checkId: id,
           status: 'down',
           duration: duration
         });
-        LogService.cleanByRole({check, userId: userId});
+        LogService.cleanByRole({ check, userId: userId });
+
+        if (check.retryOnFail && !cronJobs[`${id}_retry`] && !isRetry) {
+          console.log('Retry cron job for check: ', check.name);
+          this.runCheck({ ...check, periodToCheck: check.onFailPeriodToCheck }, true);
+        }
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
-        const message = `🚨 ${target} is down at ${dateTimeString} (UTC)`;
+        const message = isRetry ? `🚨 ${target} still down at ${dateTimeString} (UTC)` : `🚨 ${target} is down at ${dateTimeString} (UTC)`;
 
-        mostUpdatedCheck.check_integrations.forEach(async (integrationCheck) => {
-          if (integrationCheck.integration.type === 'telegram') {
-            TelegramService.sendMessage({
-              userId: integrationCheck.integration.appUserId,
-              message: message
-            });
-          } else if (integrationCheck.integration.type === 'email') {
-            try {
-              MailerService.sendMail({
-                to: integrationCheck.integration.name,
-                subject: message,
-                body: message
-              });
-            } catch (error) {
-              console.log('🚨 failed to send email', error);
-            }
-          } else if (integrationCheck.integration.type === 'slack') {
-            try {
-              SlackService.sendMessage(message, integrationCheck.integration.appUserId);
-            } catch (error) {
-              console.log('🚨 failed to send slack', error);
-            }
-          } else if (integrationCheck.integration.type === 'discord') {
-            try {
-              discordService.sendMessage(integrationCheck.integration.appUserId, integrationCheck.integration.data.token, message);
-            } catch (error) {
-              console.log('🚨 failed to send discord', error);
-            }
-          }
-        });
+        this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
         console.log(`🔥 send alert for ${target} at ${dateTimeString}`);
       }
     });
-    cronJobs = { ...cronJobs, [check.id]: cronJob };
+    const id = isRetry ? `${check.id}_retry` : check.id;
+    cronJobs = { ...cronJobs, [id]: cronJob };
     cronJob.start();
   }
 
-  static stopCheck(check) {
-    const cronJob = cronJobs[check.id];
+
+  /**
+   * It stops the cron job for the given check
+   * @param check - the check object
+   * @param [customId=null] - This is the id of the check that we want to stop. can be only the check id or 
+   * a custom key like `1_retry`
+   */
+  static stopCheck(check, customId = null) {
+    const id = customId || check.id;
+    const cronJob = cronJobs[id];
     if (cronJob) {
-      console.log(`stop cron job for ${check.target}`);
+      console.log(`stop cron job for ${check.target} - id: ${id}`);
       cronJob.stop();
     }
   }
 
   static async addIntegrations(checkId, integrations) {
-    const integrationsToAdd = integrations.map(integration => {
-      return {
-        checkId: checkId,
-        integrationId: integration.id
-      };
-    });
-    await CheckIntegration.bulkCreate(integrationsToAdd);
+    try {
+      const integrationsToAdd = integrations.map(integration => {
+        return {
+          checkId: checkId,
+          integrationId: integration.id
+        };
+      });
+      await CheckIntegration.bulkCreate(integrationsToAdd);
+    } catch (error) {
+      console.log(error);
+    }
     return;
   }
 
@@ -346,6 +394,39 @@ class CheckService {
       }
     });
     return exits ? true : false;
+  }
+
+  static async sendNotification({ message, checkIntegrations }) {
+    checkIntegrations.forEach(async (integrationCheck) => {
+      if (integrationCheck.integration.type === 'telegram') {
+        TelegramService.sendMessage({
+          userId: integrationCheck.integration.appUserId,
+          message: message
+        });
+      } else if (integrationCheck.integration.type === 'email') {
+        try {
+          MailerService.sendMail({
+            to: integrationCheck.integration.name,
+            subject: message,
+            body: message
+          });
+        } catch (error) {
+          console.log('🚨 failed to send email', error);
+        }
+      } else if (integrationCheck.integration.type === 'slack') {
+        try {
+          SlackService.sendMessage(message, integrationCheck.integration.appUserId);
+        } catch (error) {
+          console.log('🚨 failed to send slack', error);
+        }
+      } else if (integrationCheck.integration.type === 'discord') {
+        try {
+          discordService.sendMessage(integrationCheck.integration.appUserId, integrationCheck.integration.data.token, message);
+        } catch (error) {
+          console.log('🚨 failed to send discord', error);
+        }
+      }
+    });
   }
 
 }

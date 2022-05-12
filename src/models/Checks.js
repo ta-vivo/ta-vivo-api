@@ -23,6 +23,19 @@ const Checks = sequelize.define('checks', {
     type: Sequelize.STRING,
     allowNull: false
   },
+  retryOnFail: {
+    type: Sequelize.BOOLEAN,
+    allowNull: true,
+    defaultValue: false
+  },
+  onFailPeriodToCheck: {
+    type: Sequelize.TEXT,
+    allowNull: true
+  },
+  onFailPeriodToCheckLabel: {
+    type: Sequelize.STRING,
+    allowNull: true
+  },
   enabled: {
     type: Sequelize.BOOLEAN,
     allowNull: false,
