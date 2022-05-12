@@ -63,6 +63,12 @@ class CheckService {
         throw ({ status: 400, message: 'Target already exists' });
       }
 
+      if (userRole.name.toLowerCase() === 'basic') {
+        delete checkForCreate.retryOnFail;
+        delete checkForCreate.onFailPeriodToCheck;
+        delete checkForCreate.onFailperiodToCheckLabel;
+      }
+
       if (checkForCreate.retryOnFail) {
         if (!cronTimeTable.find(item => item.label === newCheck.onFailPeriodToCheck)) {
           throw ({ status: 400, message: 'onFailPeriodToCheck is not valid' });
@@ -121,6 +127,17 @@ class CheckService {
       if (!currentCheck) {
         throw ({ status: 404, message: 'Check not found' });
       }
+
+      const userRole = await Role.findOne({ where: { id: check.user.roleId } });
+      if (!cronTimeTable.find(item => item.label === check.periodToCheck).roles.includes(userRole.name.toLowerCase())) {
+        throw ({ status: 400, message: 'You are not allowed to create a check with this period' });
+      }
+
+      if (userRole.name.toLowerCase() === 'basic') {
+        delete checkForUpdate.retryOnFail;
+        delete checkForUpdate.onFailPeriodToCheck;
+        delete checkForUpdate.onFailperiodToCheckLabel;
+      }
       
       // eslint-disable-next-line no-prototype-builtins
       if (check.hasOwnProperty('retryOnFail')) {
@@ -146,11 +163,6 @@ class CheckService {
       const periodToCheck = cronTimeTable.find(item => item.label === checkForUpdate.periodToCheck);
       if (!periodToCheck) {
         throw ({ status: 400, message: 'periodToCheck is not valid' });
-      }
-
-      const userRole = await Role.findOne({ where: { id: check.user.roleId } });
-      if (!cronTimeTable.find(item => item.label === check.periodToCheck).roles.includes(userRole.name.toLowerCase())) {
-        throw ({ status: 400, message: 'You are not allowed to create a check with this period' });
       }
 
       checkForUpdate.periodToCheck = periodToCheck.value;
