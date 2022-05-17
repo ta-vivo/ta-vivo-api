@@ -21,6 +21,7 @@ class PricingService {
           { item: 'logsHistory', quantity: '1,000' },
           { item: 'integrations', quantity: 20 },
           { item: 'TimeInterval', quantity: '1 minute' },
+          { item: 'retryOnCheckFail' }
         ],
       },
       {
@@ -32,6 +33,7 @@ class PricingService {
           { item: 'logsHistory', quantity: '5,000' },
           { item: 'integrations', quantity: 50 },
           { item: 'TimeInterval', quantity: '30 seconds' },
+          { item: 'retryOnCheckFail' }
         ],
       },
       {
@@ -43,6 +45,7 @@ class PricingService {
           { item: 'logsHistory', quantity: '15,000' },
           { item: 'integrations', quantity: 100 },
           { item: 'TimeInterval', quantity: '30 seconds' },
+          { item: 'retryOnCheckFail' }
         ],
       },
     ];
