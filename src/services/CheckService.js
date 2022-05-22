@@ -218,6 +218,10 @@ class CheckService {
         this.runCheck(checkUpdated);
       }
 
+      /**
+       * audit log checkpoint
+       * Send the "check" and "currentCheck" objects to the log service
+       */
 
       return checkUpdated;
     } catch (error) {
@@ -278,6 +282,12 @@ class CheckService {
       // stop cron job
       this.stopCheck(check);
       this.stopCheck(check, true);
+
+      /**
+       * audit log checkpoint
+       * Send the "check" object to the log service
+       */
+
       return { count: rowCount };
     } catch (error) {
       throw error;
