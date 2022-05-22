@@ -158,6 +158,11 @@ class IntegrationService {
         }
       }
 
+      /**
+     * audit log checkpoint
+     * Send the "integration" object to the log service as test action
+     */
+
       return { success: true };
     } catch (error) {
       throw error;
