@@ -74,12 +74,25 @@ class IntegrationService {
 
   static async update({ id, integration, user }) {
     try {
+
+      const currentIntegration = await Integration.findOne({ where: { id, userId: user.id } });
+
+      if (!currentIntegration) {
+        throw ({ status: 400, message: 'Integration not found' });
+      }
+
       const entityUpdated = await Integration.update(integration, {
         where: {
           id,
           userId: user.id
         }
       });
+
+      /**
+       * audit log checkpoint
+       * Send the "integration" and "currentIntegration" objects to the log service
+       */
+
       return entityUpdated;
     } catch (error) {
       throw error;
@@ -153,9 +166,17 @@ class IntegrationService {
 
   static async delete({ id, user }) {
     try {
+      const integration = await Integration.findOne({ where: { id: id, userId: user.id } });
+      // Try to use the integration object to delete the integration
       const rowCount = await Integration.destroy({
         where: { id, userId: user.id }
       });
+
+      /**
+       * audit log checkpoint
+       * Send the "integration" object to the log service
+       */
+
       return { count: rowCount };
     } catch (error) {
       throw error;
