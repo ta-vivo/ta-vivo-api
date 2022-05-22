@@ -178,6 +178,12 @@ class AuthService {
             userId: user.id,
           },
         });
+
+      /**
+       * audit log checkpoint
+       * Send the "password change" action to the log service as test action
+       */
+
         return { success: true };
       }
       throw ({ status: 400, message: 'Invalid credentials' });
@@ -293,6 +299,12 @@ class AuthService {
       `;
 
       MailerService.sendMail({ to: email, subject: 'Password reset', body: emailBody });
+
+      /**
+       * audit log checkpoint
+       * Send the "password forgot" action to the log service as test action
+       */
+
       return {};
     } catch (error) {
       throw error;
