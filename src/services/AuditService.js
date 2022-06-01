@@ -7,17 +7,32 @@ class Audit {
    * @returns An axios instance
    */
   static getAxiosInstance() {
-    const instance = axios.create({
-      baseURL: process.env.AUDIT_SERVICE_API,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.AUDIT_SERVICE_API_TOKEN}`
-      }
-    });
+    let instance;
+    if (process.env.ENVIRONMENT === 'production') {
+      instance = axios.create({
+        baseURL: process.env.AUDIT_SERVICE_API,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.AUDIT_SERVICE_API_TOKEN}`
+        }
+      });
+
+    } else {
+      instance = {
+        post: () => {
+          // eslint-disable-next-line no-undef
+          return new Promise(resolve => {
+            resolve('fake success');
+          });
+        },
+      };
+      console.log('⚠️ In "development" mode the Audit service is disabled');
+    }
+
     return instance;
   }
 
-  static async onUpdate(user, {action , entity, old, edited}) {
+  static async onUpdate(user, { action, entity, old, edited }) {
     try {
       const data = {
         userId: user.id,
@@ -45,7 +60,7 @@ class Audit {
     }
   }
 
-  static async onDelete (user, deleted) {
+  static async onDelete(user, deleted) {
     try {
       const data = {
         userId: user.id,
