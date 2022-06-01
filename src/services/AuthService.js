@@ -298,10 +298,7 @@ class AuthService {
 
       MailerService.sendMail({ to: email, subject: 'Password reset', body: emailBody });
 
-      /**
-       * audit log checkpoint
-       * Send the "password forgot" action to the log service as test action
-       */
+      Audit.onUpdate(user, { action: 'password_forgot', entity: 'user' });
 
       return {};
     } catch (error) {
