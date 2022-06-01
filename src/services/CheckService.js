@@ -10,6 +10,7 @@ import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
 import LogService from './LogService';
 import LimitService from '../services/LimitsService';
+import Audit from '../services/AuditService';
 
 let cronJobs = {};
 
@@ -138,7 +139,7 @@ class CheckService {
         delete checkForUpdate.onFailPeriodToCheck;
         delete checkForUpdate.onFailperiodToCheckLabel;
       }
-      
+
       // eslint-disable-next-line no-prototype-builtins
       if (check.hasOwnProperty('retryOnFail')) {
 
@@ -167,7 +168,7 @@ class CheckService {
 
       checkForUpdate.periodToCheck = periodToCheck.value;
       checkForUpdate.periodToCheckLabel = periodToCheck.label;
-      
+
       currentCheck = JSON.parse(JSON.stringify(currentCheck));
 
       await Checks.update(checkForUpdate, { where: { id: id } });
@@ -218,10 +219,7 @@ class CheckService {
         this.runCheck(checkUpdated);
       }
 
-      /**
-       * audit log checkpoint
-       * Send the "check" and "currentCheck" objects to the log service
-       */
+      Audit.onUpdate(user, { entity: 'check', old: currentCheck, edited: check });
 
       return checkUpdated;
     } catch (error) {
@@ -283,10 +281,7 @@ class CheckService {
       this.stopCheck(check);
       this.stopCheck(check, true);
 
-      /**
-       * audit log checkpoint
-       * Send the "check" object to the log service
-       */
+      Audit.onDelete(user, { entity: 'check', data: check });
 
       return { count: rowCount };
     } catch (error) {
