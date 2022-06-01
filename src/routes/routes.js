@@ -1,5 +1,4 @@
 import express from 'express';
-import userRoutes from '../routes/User';
 import CheckRoutes from '../routes/Check';
 import IntegrationRoutes from '../routes/Integration';
 import Auth from '../routes/Auth';
@@ -11,7 +10,6 @@ import Pricing from '../routes/Pricing';
 let router = express.Router();
 
 // Routes
-router.use('/users', userRoutes);
 router.use('/checks', CheckRoutes);
 router.use('/auth', Auth);
 router.use('/integrations', IntegrationRoutes);
