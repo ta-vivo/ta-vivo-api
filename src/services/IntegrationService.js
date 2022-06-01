@@ -89,10 +89,7 @@ class IntegrationService {
         }
       });
 
-      /**
-       * audit log checkpoint
-       * Send the "integration" and "currentIntegration" objects to the log service
-       */
+      Audit.onUpdate(user, { entity: 'integration', edited: integration, old: currentIntegration });
 
       return entityUpdated;
     } catch (error) {
