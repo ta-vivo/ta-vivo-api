@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import MailerService from '../services/MailerService';
 import LimitsService from '../services/LimitsService';
 import { v4 as uuidv4 } from 'uuid';
+import Audit from './AuditService';
 class AuthService {
 
   static async login({ email, password }) {
@@ -179,10 +180,7 @@ class AuthService {
           },
         });
 
-      /**
-       * audit log checkpoint
-       * Send the "password change" action to the log service as test action
-       */
+        Audit.onUpdate(user, { action: 'password_change', old: {}, edited: {}, entity: 'user' });
 
         return { success: true };
       }
