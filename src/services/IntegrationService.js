@@ -3,6 +3,7 @@ import MailerService from '../services/MailerService';
 import TelegramService from '../services/TelegramService';
 import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
+import Audit from './AuditService';
 class IntegrationService {
 
   static async requestEmailConfirmation({ email, user }) {
@@ -172,15 +173,12 @@ class IntegrationService {
   static async delete({ id, user }) {
     try {
       const integration = await Integration.findOne({ where: { id: id, userId: user.id } });
-      // Try to use the integration object to delete the integration
+
       const rowCount = await Integration.destroy({
         where: { id, userId: user.id }
       });
 
-      /**
-       * audit log checkpoint
-       * Send the "integration" object to the log service
-       */
+      Audit.onDelete(user, { entity: 'integration', data: integration });
 
       return { count: rowCount };
     } catch (error) {
