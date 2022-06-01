@@ -159,10 +159,7 @@ class IntegrationService {
         }
       }
 
-      /**
-     * audit log checkpoint
-     * Send the "integration" object to the log service as test action
-     */
+      Audit.onUpdate(user, { entity: 'integration', action: 'integration_test' });
 
       return { success: true };
     } catch (error) {
