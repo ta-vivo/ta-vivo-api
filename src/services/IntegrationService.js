@@ -3,6 +3,7 @@ import MailerService from '../services/MailerService';
 import TelegramService from '../services/TelegramService';
 import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
+import Audit from './AuditService';
 class IntegrationService {
 
   static async requestEmailConfirmation({ email, user }) {
@@ -74,12 +75,22 @@ class IntegrationService {
 
   static async update({ id, integration, user }) {
     try {
+
+      const currentIntegration = await Integration.findOne({ where: { id, userId: user.id } });
+
+      if (!currentIntegration) {
+        throw ({ status: 400, message: 'Integration not found' });
+      }
+
       const entityUpdated = await Integration.update(integration, {
         where: {
           id,
           userId: user.id
         }
       });
+
+      Audit.onUpdate(user, { entity: 'integration', edited: integration, old: currentIntegration });
+
       return entityUpdated;
     } catch (error) {
       throw error;
@@ -145,6 +156,8 @@ class IntegrationService {
         }
       }
 
+      Audit.onUpdate(user, { entity: 'integration', action: 'integration_test' });
+
       return { success: true };
     } catch (error) {
       throw error;
@@ -153,9 +166,14 @@ class IntegrationService {
 
   static async delete({ id, user }) {
     try {
+      const integration = await Integration.findOne({ where: { id: id, userId: user.id } });
+
       const rowCount = await Integration.destroy({
         where: { id, userId: user.id }
       });
+
+      Audit.onDelete(user, { entity: 'integration', data: integration });
+
       return { count: rowCount };
     } catch (error) {
       throw error;

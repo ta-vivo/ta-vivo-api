@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import MailerService from '../services/MailerService';
 import LimitsService from '../services/LimitsService';
 import { v4 as uuidv4 } from 'uuid';
+import Audit from './AuditService';
 class AuthService {
 
   static async login({ email, password }) {
@@ -178,6 +179,9 @@ class AuthService {
             userId: user.id,
           },
         });
+
+        Audit.onUpdate(user, { action: 'password_change', old: {}, edited: {}, entity: 'user' });
+
         return { success: true };
       }
       throw ({ status: 400, message: 'Invalid credentials' });
@@ -293,6 +297,9 @@ class AuthService {
       `;
 
       MailerService.sendMail({ to: email, subject: 'Password reset', body: emailBody });
+
+      Audit.onUpdate(user, { action: 'password_forgot', entity: 'user' });
+
       return {};
     } catch (error) {
       throw error;
