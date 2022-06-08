@@ -5,6 +5,7 @@ import { verifyToken } from '../middlewares/Auth';
 const router = Router();
 
 router.post('/login', AuthController.login);
+router.post('/google', AuthController.google);
 router.post('/register', AuthController.register);
 router.get('/me', verifyToken, AuthController.me);
 router.post('/register-email-confirmation', verifyToken, AuthController.registerEmailConfirmation);
