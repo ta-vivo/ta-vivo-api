@@ -13,7 +13,7 @@ const UserCredential = sequelize.define('users_credentials', {
     allowNull: false
   },
   type: {
-    type: Sequelize.STRING,
+    type: Sequelize.STRING(20),
     allowNull: false,
     defaultValue: 'local'
   }
