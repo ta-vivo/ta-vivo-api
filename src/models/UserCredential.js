@@ -11,6 +11,11 @@ const UserCredential = sequelize.define('users_credentials', {
   password: {
     type: Sequelize.STRING,
     allowNull: false
+  },
+  type: {
+    type: Sequelize.STRING,
+    allowNull: false,
+    defaultValue: 'local'
   }
 }, {});
 
