@@ -80,7 +80,8 @@ class AuthService {
             const userCreated = await User.create({
               fullname: supabaseResponse.user.user_metadata.full_name,
               email: supabaseResponse.user.email,
-              roleId: basicRole.id
+              roleId: basicRole.id,
+              active: true
             });
 
             await UserCredential.create({
