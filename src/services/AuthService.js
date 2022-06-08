@@ -102,6 +102,58 @@ class AuthService {
     }
   }
 
+  static async discord ({access_token}) {
+    try {
+      return supabase.auth.api.getUser(access_token)
+        .then(async (supabaseResponse) => {
+          if (supabaseResponse.error ){ 
+            throw ({ message: 'Invalid credentials', status: 400 });
+          }
+
+          const exists = await User.findOne({
+            where: {
+              email: supabaseResponse.user.email,
+            },
+          });
+
+          if (exists) {
+            const response = await this.me({ user: exists });
+            await exists.update({
+              lastLogin: new Date(),
+            });
+
+            return { token: response.token };
+          } else {
+            const basicRole = await Role.findOne({
+              where: {
+                name: 'basic',
+              },
+            });
+
+            const userCreated = await User.create({
+              fullname: supabaseResponse.user.user_metadata.full_name,
+              email: supabaseResponse.user.email,
+              roleId: basicRole.id,
+              active: true
+            });
+
+            await UserCredential.create({
+              password: '_',
+              type: 'discord_provider',
+              userId: userCreated.id,
+            });
+
+            const response = await this.me({ user: userCreated });
+            return { token: response.token };
+          }
+        }).catch(error => {
+          throw error;
+        });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async me({ user }) {
     try {
       const userData = await User.findOne({
