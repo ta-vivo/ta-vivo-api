@@ -52,8 +52,8 @@ class AuthService {
     try {
       return supabase.auth.api.getUser(access_token)
         .then(async (supabaseResponse) => {
-          
-          if (supabaseResponse.error ){ 
+
+          if (supabaseResponse.error) {
             throw ({ message: 'Invalid credentials', status: 400 });
           }
 
@@ -71,23 +71,10 @@ class AuthService {
 
             return { token: response.token };
           } else {
-            const basicRole = await Role.findOne({
-              where: {
-                name: 'basic',
-              },
-            });
 
-            const userCreated = await User.create({
-              fullname: supabaseResponse.user.user_metadata.full_name,
-              email: supabaseResponse.user.email,
-              roleId: basicRole.id,
-              active: true
-            });
-
-            await UserCredential.create({
-              password: '_',
-              type: 'google_provider',
-              userId: userCreated.id,
+            const userCreated = await this.registerFromSupabase({
+              supabaseUser: supabaseResponse.user,
+              provider: 'google_provider'
             });
 
             const response = await this.me({ user: userCreated });
@@ -102,11 +89,11 @@ class AuthService {
     }
   }
 
-  static async discord ({access_token}) {
+  static async discord({ access_token }) {
     try {
       return supabase.auth.api.getUser(access_token)
         .then(async (supabaseResponse) => {
-          if (supabaseResponse.error ){ 
+          if (supabaseResponse.error) {
             throw ({ message: 'Invalid credentials', status: 400 });
           }
 
@@ -124,23 +111,10 @@ class AuthService {
 
             return { token: response.token };
           } else {
-            const basicRole = await Role.findOne({
-              where: {
-                name: 'basic',
-              },
-            });
 
-            const userCreated = await User.create({
-              fullname: supabaseResponse.user.user_metadata.full_name,
-              email: supabaseResponse.user.email,
-              roleId: basicRole.id,
-              active: true
-            });
-
-            await UserCredential.create({
-              password: '_',
-              type: 'discord_provider',
-              userId: userCreated.id,
+            const userCreated = await this.registerFromSupabase({
+              supabaseUser: supabaseResponse.user,
+              provider: 'discord_provider'
             });
 
             const response = await this.me({ user: userCreated });
@@ -263,6 +237,29 @@ class AuthService {
     } catch (error) {
       throw error;
     }
+  }
+
+  static async registerFromSupabase({ supabaseUser, provider }) {
+    const basicRole = await Role.findOne({
+      where: {
+        name: 'basic',
+      },
+    });
+
+    const userCreated = await User.create({
+      fullname: supabaseUser.user_metadata.full_name,
+      email: supabaseUser.email,
+      roleId: basicRole.id,
+      active: true
+    });
+
+    await UserCredential.create({
+      password: '_',
+      type: provider,
+      userId: userCreated.id,
+    });
+
+    return userCreated;
   }
 
   static async changePassword({ user, oldPassword, newPassword }) {
