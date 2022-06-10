@@ -167,6 +167,45 @@ class AuthService {
     }
   }
 
+  static async github({ access_token }) {
+    try {
+      return supabase.auth.api.getUser(access_token)
+        .then(async (supabaseResponse) => {
+          if (supabaseResponse.error) {
+            throw ({ message: 'Invalid credentials', status: 400 });
+          }
+
+          const exists = await User.findOne({
+            where: {
+              email: supabaseResponse.user.email,
+            },
+          });
+
+          if (exists) {
+            const response = await this.me({ user: exists });
+            await exists.update({
+              lastLogin: new Date(),
+            });
+
+            return { token: response.token };
+          } else {
+
+            const userCreated = await this.registerFromSupabase({
+              supabaseUser: supabaseResponse.user,
+              provider: 'github_provider'
+            });
+
+            const response = await this.me({ user: userCreated });
+            return { token: response.token };
+          }
+        }).catch(error => {
+          throw error;
+        });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async me({ user }) {
     try {
       const userData = await User.findOne({
