@@ -189,6 +189,19 @@ class AuthController {
     }
   }
 
+  static async github(req, res) {
+    const { access_token } = req.body;
+    try {
+      const user = await AuthService.github({ access_token });
+      return res.json(Response.get('success', user));
+    }
+    catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
 }
 
 export default AuthController;
