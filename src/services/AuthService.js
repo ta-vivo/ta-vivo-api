@@ -5,6 +5,8 @@ import MailerService from '../services/MailerService';
 import LimitsService from '../services/LimitsService';
 import { v4 as uuidv4 } from 'uuid';
 import Audit from './AuditService';
+import supabase from '../utils/supabase';
+
 class AuthService {
 
   static async login({ email, password }) {
@@ -41,6 +43,164 @@ class AuthService {
         return { token: response.token };
       }
       throw ({ status: 400, message: 'Invalid email or password' });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async google({ access_token }) {
+    try {
+      return supabase.auth.api.getUser(access_token)
+        .then(async (supabaseResponse) => {
+
+          if (supabaseResponse.error) {
+            throw ({ message: 'Invalid credentials', status: 400 });
+          }
+
+          const exists = await User.findOne({
+            where: {
+              email: supabaseResponse.user.email,
+            },
+          });
+
+          if (exists) {
+            const response = await this.me({ user: exists });
+            await exists.update({
+              lastLogin: new Date(),
+            });
+
+            return { token: response.token };
+          } else {
+
+            const userCreated = await this.registerFromSupabase({
+              supabaseUser: supabaseResponse.user,
+              provider: 'google_provider'
+            });
+
+            const response = await this.me({ user: userCreated });
+            return { token: response.token };
+          }
+        }).catch(error => {
+          throw error;
+        });
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async discord({ access_token }) {
+    try {
+      return supabase.auth.api.getUser(access_token)
+        .then(async (supabaseResponse) => {
+          if (supabaseResponse.error) {
+            throw ({ message: 'Invalid credentials', status: 400 });
+          }
+
+          const exists = await User.findOne({
+            where: {
+              email: supabaseResponse.user.email,
+            },
+          });
+
+          if (exists) {
+            const response = await this.me({ user: exists });
+            await exists.update({
+              lastLogin: new Date(),
+            });
+
+            return { token: response.token };
+          } else {
+
+            const userCreated = await this.registerFromSupabase({
+              supabaseUser: supabaseResponse.user,
+              provider: 'discord_provider'
+            });
+
+            const response = await this.me({ user: userCreated });
+            return { token: response.token };
+          }
+        }).catch(error => {
+          throw error;
+        });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async slack({ access_token }) {
+    try {
+      return supabase.auth.api.getUser(access_token)
+        .then(async (supabaseResponse) => {
+          if (supabaseResponse.error) {
+            throw ({ message: 'Invalid credentials', status: 400 });
+          }
+
+          const exists = await User.findOne({
+            where: {
+              email: supabaseResponse.user.email,
+            },
+          });
+
+          if (exists) {
+            const response = await this.me({ user: exists });
+            await exists.update({
+              lastLogin: new Date(),
+            });
+
+            return { token: response.token };
+          } else {
+
+            const userCreated = await this.registerFromSupabase({
+              supabaseUser: supabaseResponse.user,
+              provider: 'slack_provider'
+            });
+
+            const response = await this.me({ user: userCreated });
+            return { token: response.token };
+          }
+        }).catch(error => {
+          throw error;
+        });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async github({ access_token }) {
+    try {
+      return supabase.auth.api.getUser(access_token)
+        .then(async (supabaseResponse) => {
+          if (supabaseResponse.error) {
+            throw ({ message: 'Invalid credentials', status: 400 });
+          }
+
+          const exists = await User.findOne({
+            where: {
+              email: supabaseResponse.user.email,
+            },
+          });
+
+          if (exists) {
+            const response = await this.me({ user: exists });
+            await exists.update({
+              lastLogin: new Date(),
+            });
+
+            return { token: response.token };
+          } else {
+
+            const userCreated = await this.registerFromSupabase({
+              supabaseUser: supabaseResponse.user,
+              provider: 'github_provider'
+            });
+
+            const response = await this.me({ user: userCreated });
+            return { token: response.token };
+          }
+        }).catch(error => {
+          throw error;
+        });
     } catch (error) {
       throw error;
     }
@@ -155,6 +315,29 @@ class AuthService {
     } catch (error) {
       throw error;
     }
+  }
+
+  static async registerFromSupabase({ supabaseUser, provider }) {
+    const basicRole = await Role.findOne({
+      where: {
+        name: 'basic',
+      },
+    });
+
+    const userCreated = await User.create({
+      fullname: supabaseUser.user_metadata.full_name,
+      email: supabaseUser.email,
+      roleId: basicRole.id,
+      active: true
+    });
+
+    await UserCredential.create({
+      password: '_',
+      type: provider,
+      userId: userCreated.id,
+    });
+
+    return userCreated;
   }
 
   static async changePassword({ user, oldPassword, newPassword }) {

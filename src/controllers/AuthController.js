@@ -149,6 +149,59 @@ class AuthController {
     }
   }
 
+  static async google(req, res) {
+    const { access_token } = req.body;
+    try {
+      const user = await AuthService.google({ access_token });
+      return res.json(Response.get('success', user));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
+  static async discord(req, res) {
+    const { access_token } = req.body;
+    try {
+      const user = await AuthService.discord({ access_token });
+      return res.json(Response.get('success', user));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
+  static async slack(req, res) {
+    const { access_token } = req.body;
+    try {
+      const user = await AuthService.slack({ access_token });
+      return res.json(Response.get('success', user));
+    }
+    catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
+  static async github(req, res) {
+    const { access_token } = req.body;
+    try {
+      const user = await AuthService.github({ access_token });
+      return res.json(Response.get('success', user));
+    }
+    catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
 }
 
 export default AuthController;
