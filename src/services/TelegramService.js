@@ -22,8 +22,13 @@ class TelegramService {
   }
 
   static async sendMessage({message, userId}) {
-    const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
-    bot.sendMessage(userId, message);
+    try {
+      const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+      bot.sendMessage(userId, message);
+    } catch (error) {
+      console.log('Error sending message to Telegram:', error);
+    }
+
   }
 
 }
