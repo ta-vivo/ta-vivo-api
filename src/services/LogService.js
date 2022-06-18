@@ -2,7 +2,7 @@ import { User, Role, CheckLogs } from '../models';
 
 class LogService {
 
-  static async cleanByRole({ check, userId }) {
+  static async cleanByRole({ checkId, userId }) {
     try {
       const rolesLimits = [
         { role: 'basic', limit: 200 },
@@ -28,7 +28,7 @@ class LogService {
       if (limit) {
         const logs = await CheckLogs.count({
           where: {
-            checkId: check.id
+            checkId: checkId
           },
           order: [['createdAt', 'DESC']],
           limit: limit,
@@ -38,7 +38,7 @@ class LogService {
           // delete the oldest logs after limit
           const logsToDelete = await CheckLogs.findAll({
             where: {
-              checkId: check.id
+              checkId: checkId
             },
             order: [['createdAt', 'ASC']],
             limit: logs - limit,
@@ -48,7 +48,7 @@ class LogService {
               id: logsToDelete.map(log => log.id)
             }
           });
-          console.log('X Logs Cleaned from check', check.id);
+          console.log('X Logs Cleaned from check', checkId);
         }
       }
 
