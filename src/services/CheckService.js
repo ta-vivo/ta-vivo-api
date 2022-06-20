@@ -310,7 +310,7 @@ class CheckService {
           status: 'up',
           duration: duration
         });
-        LogService.cleanByRole({ check, userId: userId });
+        LogService.cleanByRole({ checkId: id, userId: userId });
 
         if (isRetry) {
           const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
@@ -323,11 +323,13 @@ class CheckService {
           status: 'down',
           duration: duration
         });
-        LogService.cleanByRole({ check, userId: userId });
+        LogService.cleanByRole({ checkId: id, userId: userId });
 
         if (check.retryOnFail && !cronJobs[`${id}_retry`] && !isRetry) {
           console.log('Retry cron job for check: ', check.name);
-          this.runCheck({ ...check, periodToCheck: check.onFailPeriodToCheck }, true);
+          const newCheck = check;
+          newCheck.periodToCheck = check.onFailPeriodToCheck;
+          this.runCheck(newCheck, true);
         }
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
