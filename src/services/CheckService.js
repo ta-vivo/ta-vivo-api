@@ -11,6 +11,7 @@ import discordService from '../services/DiscordService';
 import LogService from './LogService';
 import LimitService from '../services/LimitsService';
 import Audit from '../services/AuditService';
+import { getCurrentDate } from '../utils/time';
 
 let cronJobs = {};
 
@@ -293,8 +294,6 @@ class CheckService {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
       const { id, target, userId } = check;
-      const dateTime = new Date();
-      const dateTimeString = `${dateTime.getDate()}/${dateTime.getMonth()}/${dateTime.getFullYear()} ${dateTime.getHours()}:${dateTime.getMinutes()}:${dateTime.getSeconds()}`;
       const durationStart = performance.now();
       let duration = 0;
 
@@ -303,7 +302,7 @@ class CheckService {
           timeout: 5000
         });
         duration = (performance.now() - durationStart).toFixed(5);
-        const successMessage = `✅ ${target} is alive at ${dateTimeString} (UTC)`;
+        const successMessage = `✅ ${target} is alive at ${getCurrentDate()} (UTC)`;
         console.log(successMessage);
         CheckLogs.create({
           checkId: id,
@@ -333,10 +332,10 @@ class CheckService {
         }
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
-        const message = isRetry ? `🚨 ${target} still down at ${dateTimeString} (UTC)` : `🚨 ${target} is down at ${dateTimeString} (UTC)`;
+        const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate()} (UTC)` : `🚨 ${target} is down at ${getCurrentDate()} (UTC)`;
 
         this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
-        console.log(`🔥 send alert for ${target} at ${dateTimeString}`);
+        console.log(`🔥 send alert for ${target} at ${getCurrentDate()}`);
       }
     });
     const id = isRetry ? `${check.id}_retry` : check.id;
