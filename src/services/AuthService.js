@@ -543,7 +543,7 @@ class AuthService {
       { id: user.id, email: user.email, fullname: user.fullname, active: user.active, enabled: user.enabled, role: user.role, settings: user.settings },
       process.env.TOKEN_KEY,
       {
-        expiresIn: '2h',
+        expiresIn: '30d',
       }
     );
 
