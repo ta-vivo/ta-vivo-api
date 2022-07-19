@@ -255,6 +255,10 @@ class AuthService {
         throw ({ status: 400, message: 'Passwords do not match' });
       }
 
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw ({ status: 400, message: 'Invalid email' });
+      }
+
       const user = await User.findOne({
         where: {
           email: email,
