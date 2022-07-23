@@ -12,6 +12,7 @@ import LogService from './LogService';
 import LimitService from '../services/LimitsService';
 import Audit from '../services/AuditService';
 import { getCurrentDate } from '../utils/time';
+import timezones from '../utils/timezones.json';
 
 let cronJobs = {};
 
@@ -37,6 +38,12 @@ class CheckService {
     // check isValidDomain
     if (!isValidDomain(newCheck.target) && !isValidIpv4(newCheck.target) && !isValidIpv4WithProtocol(newCheck.target)) {
       throw ({ status: 400, message: 'The target is not valid' });
+    }
+
+    if (newCheck.timezone) {
+      if (!timezones.find(item => item.code === newCheck.timezone)) {
+        throw ({ status: 400, message: 'timezone is not valid' });
+      }
     }
 
     try {
@@ -115,6 +122,12 @@ class CheckService {
       }
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
+    }
+
+    if (check.timezone) {
+      if (!timezones.find(item => item.code === check.timezone)) {
+        throw ({ status: 400, message: 'timezone is not valid' });
+      }
     }
 
     try {
