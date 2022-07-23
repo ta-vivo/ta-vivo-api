@@ -41,7 +41,11 @@ const Checks = sequelize.define('checks', {
     allowNull: false,
     defaultValue: true
   },
-
+  timezone: {
+    type: Sequelize.TEXT,
+    allowNull: false,
+    defaultValue: 'UTC'
+  }
 }, {});
 
 Checks.belongsTo(User, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });

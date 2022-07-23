@@ -32,6 +32,11 @@ const User = sequelize.define('users', {
     type: Sequelize.DATE,
     allowNull: false,
     defaultValue: Sequelize.NOW
+  },
+  timezone: {
+    type: Sequelize.TEXT,
+    allowNull: false,
+    defaultValue: 'UTC'
   }
 }, {});
 
