@@ -293,7 +293,7 @@ class CheckService {
   static runCheck(check, isRetry = false) {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
-      const { id, target, userId } = check;
+      const { id, target, userId, timezone} = check;
       const durationStart = performance.now();
       let duration = 0;
 
@@ -302,12 +302,14 @@ class CheckService {
           timeout: 5000
         });
         duration = (performance.now() - durationStart).toFixed(5);
-        const successMessage = `✅ ${target} is alive at ${getCurrentDate()} (UTC)`;
+        const successMessage = `✅ ${target} is alive at ${getCurrentDate(timezone)} (${timezone})`;
         console.log(successMessage);
         CheckLogs.create({
           checkId: id,
           status: 'up',
-          duration: duration
+          duration: duration,
+          timezone: timezone,
+          createdAt: getCurrentDate(timezone)
         });
         LogService.cleanByRole({ checkId: id, userId: userId });
 
@@ -320,7 +322,9 @@ class CheckService {
         CheckLogs.create({
           checkId: id,
           status: 'down',
-          duration: duration
+          duration: duration,
+          timezone: timezone,
+          createdAt: getCurrentDate(timezone)
         });
         LogService.cleanByRole({ checkId: id, userId: userId });
 
@@ -332,10 +336,10 @@ class CheckService {
         }
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
-        const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate()} (UTC)` : `🚨 ${target} is down at ${getCurrentDate()} (UTC)`;
+        const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate(timezone)} (${timezone})` : `🚨 ${target} is down at ${getCurrentDate(timezone)} (${timezone})`;
 
         this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
-        console.log(`🔥 send alert for ${target} at ${getCurrentDate()}`);
+        console.log(`🔥 send alert for ${target} at ${getCurrentDate(timezone)} (${timezone})`);
       }
     });
     const id = isRetry ? `${check.id}_retry` : check.id;
