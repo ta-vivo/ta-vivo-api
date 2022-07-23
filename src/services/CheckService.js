@@ -44,6 +44,8 @@ class CheckService {
       if (!timezones.find(item => item.code === newCheck.timezone)) {
         throw ({ status: 400, message: 'timezone is not valid' });
       }
+
+      checkForCreate.timezone = newCheck.timezone;
     }
 
     try {
@@ -123,7 +125,7 @@ class CheckService {
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
     }
-
+    
     if (check.timezone) {
       if (!timezones.find(item => item.code === check.timezone)) {
         throw ({ status: 400, message: 'timezone is not valid' });
@@ -136,6 +138,10 @@ class CheckService {
         periodToCheck: check.periodToCheck,
         enabled: check.enabled ? check.enabled : false
       };
+
+      if (check.timezone) {
+        checkForUpdate.timezone = check.timezone;
+      }
 
       let currentCheck = await Checks.findOne({ where: { id } });
 
