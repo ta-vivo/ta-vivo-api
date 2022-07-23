@@ -1,12 +1,9 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import UserController from '../controllers/UserController';
+import { verifyToken } from '../middlewares/Auth';
 
 const router = Router();
 
-router.get('/', UserController.getAll );
-router.get('/:id', UserController.getById );
-router.put('/:id', UserController.update );
-router.post('/', UserController.create );
-router.delete('/:id', UserController.delete);
+router.put('/', verifyToken, UserController.update);
 
 export default router;
