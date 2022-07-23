@@ -210,6 +210,10 @@ class CheckService {
       if (checkForUpdate.target !== currentCheck.target) {
         requireUpdateCron = true;
       }
+      
+      if (checkForUpdate.timezone !== currentCheck.timezone) {
+        requireUpdateCron = true;
+      }
 
       if (checkForUpdate.periodToCheck && checkForUpdate.periodToCheck !== currentCheck.periodToCheck) {
         requireUpdateCron = true;
