@@ -338,7 +338,9 @@ class CheckService {
 
         if (isRetry) {
           const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
-          this.sendNotification({ message: successMessage, checkIntegrations: mostUpdatedCheck.check_integrations });
+          if (mostUpdatedCheck) {
+            this.sendNotification({ message: successMessage, checkIntegrations: mostUpdatedCheck.check_integrations });
+          }
           this.stopCheck(check, `${check.id}_retry`);
         }
       } catch (error) {
@@ -361,7 +363,9 @@ class CheckService {
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
         const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate(timezone)} (${timezone})` : `🚨 ${target} is down at ${getCurrentDate(timezone)} (${timezone})`;
 
-        this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
+        if (mostUpdatedCheck) {
+          this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
+        }
         console.log(`🔥 send alert for ${target} at ${getCurrentDate(timezone)} (${timezone})`);
       }
     });
