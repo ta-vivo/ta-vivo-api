@@ -5,6 +5,7 @@ import Auth from '../routes/Auth';
 import Dashboard from '../routes/Dashboard';
 import Payment from '../routes/Payment';
 import Pricing from '../routes/Pricing';
+import User from '../routes/User';
 
 // Initialization
 let router = express.Router();
@@ -16,5 +17,6 @@ router.use('/integrations', IntegrationRoutes);
 router.use('/dashboard', Dashboard);
 router.use('/payments', Payment);
 router.use('/pricing', Pricing);
+router.use('/users', User);
 
 export default router;

@@ -12,6 +12,7 @@ import LogService from './LogService';
 import LimitService from '../services/LimitsService';
 import Audit from '../services/AuditService';
 import { getCurrentDate } from '../utils/time';
+import timezones from '../utils/timezones.json';
 
 let cronJobs = {};
 
@@ -37,6 +38,14 @@ class CheckService {
     // check isValidDomain
     if (!isValidDomain(newCheck.target) && !isValidIpv4(newCheck.target) && !isValidIpv4WithProtocol(newCheck.target)) {
       throw ({ status: 400, message: 'The target is not valid' });
+    }
+
+    if (newCheck.timezone) {
+      if (!timezones.find(item => item.code === newCheck.timezone)) {
+        throw ({ status: 400, message: 'timezone is not valid' });
+      }
+
+      checkForCreate.timezone = newCheck.timezone;
     }
 
     try {
@@ -116,6 +125,12 @@ class CheckService {
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
     }
+    
+    if (check.timezone) {
+      if (!timezones.find(item => item.code === check.timezone)) {
+        throw ({ status: 400, message: 'timezone is not valid' });
+      }
+    }
 
     try {
       const checkForUpdate = {
@@ -123,6 +138,10 @@ class CheckService {
         periodToCheck: check.periodToCheck,
         enabled: check.enabled ? check.enabled : false
       };
+
+      if (check.timezone) {
+        checkForUpdate.timezone = check.timezone;
+      }
 
       let currentCheck = await Checks.findOne({ where: { id } });
 
@@ -189,6 +208,10 @@ class CheckService {
       let requireStopCron = false;
 
       if (checkForUpdate.target !== currentCheck.target) {
+        requireUpdateCron = true;
+      }
+      
+      if (checkForUpdate.timezone !== currentCheck.timezone) {
         requireUpdateCron = true;
       }
 
@@ -293,7 +316,7 @@ class CheckService {
   static runCheck(check, isRetry = false) {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
-      const { id, target, userId } = check;
+      const { id, target, userId, timezone} = check;
       const durationStart = performance.now();
       let duration = 0;
 
@@ -302,25 +325,31 @@ class CheckService {
           timeout: 5000
         });
         duration = (performance.now() - durationStart).toFixed(5);
-        const successMessage = `✅ ${target} is alive at ${getCurrentDate()} (UTC)`;
+        const successMessage = `✅ ${target} is alive at ${getCurrentDate(timezone)} (${timezone})`;
         console.log(successMessage);
         CheckLogs.create({
           checkId: id,
           status: 'up',
-          duration: duration
+          duration: duration,
+          timezone: timezone,
+          createdAt: getCurrentDate(timezone)
         });
         LogService.cleanByRole({ checkId: id, userId: userId });
 
         if (isRetry) {
           const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
-          this.sendNotification({ message: successMessage, checkIntegrations: mostUpdatedCheck.check_integrations });
+          if (mostUpdatedCheck) {
+            this.sendNotification({ message: successMessage, checkIntegrations: mostUpdatedCheck.check_integrations });
+          }
           this.stopCheck(check, `${check.id}_retry`);
         }
       } catch (error) {
         CheckLogs.create({
           checkId: id,
           status: 'down',
-          duration: duration
+          duration: duration,
+          timezone: timezone,
+          createdAt: getCurrentDate(timezone)
         });
         LogService.cleanByRole({ checkId: id, userId: userId });
 
@@ -332,10 +361,12 @@ class CheckService {
         }
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
-        const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate()} (UTC)` : `🚨 ${target} is down at ${getCurrentDate()} (UTC)`;
+        const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate(timezone)} (${timezone})` : `🚨 ${target} is down at ${getCurrentDate(timezone)} (${timezone})`;
 
-        this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
-        console.log(`🔥 send alert for ${target} at ${getCurrentDate()}`);
+        if (mostUpdatedCheck) {
+          this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
+        }
+        console.log(`🔥 send alert for ${target} at ${getCurrentDate(timezone)} (${timezone})`);
       }
     });
     const id = isRetry ? `${check.id}_retry` : check.id;

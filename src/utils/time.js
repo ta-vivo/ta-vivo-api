@@ -1,13 +1,18 @@
+import dayjs from 'dayjs';
+import timezonePlugin from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
+dayjs.extend(timezonePlugin);
 
 /**
- * It returns a string containing the current date and time in the format:
- * DD/MM/YYYY HH:MM:SS
- * @returns A string with the current date and time.
+ * This function returns the current date in the specified timezone and format.
+ * @param [timezone=UTC] - The timezone you want to use.
+ * @param [format=MM-DD-YYYY HH:mm:ss] - The format of the date you want to return.
+ * @returns A string of the current date in the format MM-DD-YYYY HH:mm:ss
  */
-const getCurrentDate = ()  => {
-  const dateTime = new Date();
-  const dateTimeString = `${dateTime.getDate()}/${dateTime.getMonth() + 1}/${dateTime.getFullYear()} ${dateTime.getHours()}:${dateTime.getMinutes()}:${dateTime.getSeconds()}`;
-  return dateTimeString;
+const getCurrentDate = (timezone = 'UTC', format = 'MM-DD-YYYY HH:mm:ss') => {
+  return dayjs(new Date()).tz(timezone).format(format);
 };
 
 export { getCurrentDate };

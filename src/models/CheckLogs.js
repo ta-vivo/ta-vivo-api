@@ -14,6 +14,11 @@ const CheckLogs = sequelize.define('check_logs', {
   duration: {
     type: Sequelize.TEXT,
     allowNull: true
+  },
+  timezone: {
+    type: Sequelize.TEXT,
+    allowNull: false,
+    defaultValue: 'UTC'
   }
 }, {});
 

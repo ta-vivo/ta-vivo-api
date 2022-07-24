@@ -241,7 +241,8 @@ class AuthService {
             count: currentIntegrationsCount,
             limit: integrationLimit
           }
-        }
+        },
+        timezone: userData.timezone || 'UTC'
       });
       return { token };
     } catch (error) {
@@ -544,7 +545,16 @@ class AuthService {
 
   static createJWT(user) {
     const token = jwt.sign(
-      { id: user.id, email: user.email, fullname: user.fullname, active: user.active, enabled: user.enabled, role: user.role, settings: user.settings },
+      {
+        id: user.id,
+        email: user.email,
+        fullname: user.fullname,
+        active: user.active,
+        enabled: user.enabled,
+        role: user.role,
+        settings: user.settings,
+        timezone: user.timezone
+      },
       process.env.TOKEN_KEY,
       {
         expiresIn: '30d',
