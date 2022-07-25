@@ -240,6 +240,7 @@ class CheckService {
       }
 
       if (checkUpdated.enabled && requireUpdateCron) {
+        this.stopCheck(checkUpdated);
         this.runCheck(checkUpdated);
       }
 
