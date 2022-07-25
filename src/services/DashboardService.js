@@ -32,7 +32,7 @@ class DashboardService {
         ],
         limit: 5,
         order: [
-          ['createdAt', 'DESC']
+          ['id', 'DESC']
         ]
       });
 
