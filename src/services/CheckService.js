@@ -332,8 +332,7 @@ class CheckService {
           checkId: id,
           status: 'up',
           duration: duration,
-          timezone: timezone,
-          createdAt: getCurrentDate(timezone)
+          timezone: timezone
         });
         LogService.cleanByRole({ checkId: id, userId: userId });
 
@@ -349,8 +348,7 @@ class CheckService {
           checkId: id,
           status: 'down',
           duration: duration,
-          timezone: timezone,
-          createdAt: getCurrentDate(timezone)
+          timezone: timezone
         });
         LogService.cleanByRole({ checkId: id, userId: userId });
 
