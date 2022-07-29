@@ -13,7 +13,7 @@ const Integration = sequelize.define('integrations', {
     allowNull: false
   },
   type: {
-    type: Sequelize.ENUM('telegram', 'email', 'slack', 'discord'),
+    type: Sequelize.ENUM('telegram', 'email', 'slack', 'discord', 'whatsapp'),
   },
   appUserId: {
     type: Sequelize.TEXT,
