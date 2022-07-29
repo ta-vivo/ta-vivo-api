@@ -181,6 +181,13 @@ class IntegrationService {
         } catch (error) {
           console.log('🚨 failed to send discord', error);
         }
+      } else if (integration.type === 'whatsapp') {
+        try {
+          return WhatsappService
+            .sendMessage({ phone: integration.appUserId, message: message });
+        } catch (error) {
+          throw { message: 'failed to send Whatsapp test message', status: 500 };
+        }
       }
 
       Audit.onUpdate(user, { entity: 'integration', action: 'integration_test' });
