@@ -35,19 +35,11 @@ class WhatsappService {
 
 
   static async sendMessage({ phone, message }) {
-    try {
-      return this.getAxiosInstance()
-        .post('/messages/send-message', {
-          phone: phone,
-          message: message
-        })
-        .catch((error) => {
-          console.log(error.response);
-          throw { message: 'Failed when trying send Whatsapp message' };
-        });
-    } catch (error) {
-      throw error;
-    }
+    return this.getAxiosInstance()
+      .post('/messages/send-message', {
+        phone: phone,
+        message: message
+      });
   }
 
 }
