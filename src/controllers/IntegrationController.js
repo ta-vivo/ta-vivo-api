@@ -62,6 +62,19 @@ class IntegrationsController {
     }
   }
 
+  static async requestWhatsappConfirmation(req, res) {
+    const { phone } = req.body;
+    try {
+      await IntegrationService.requestWhatsappConfirmation({ phone, user: req.user });
+      return res.json(Response.get('Cofnirmation sent', {}));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
   static async update(req, res) {
     const { id } = req.params;
     const { name } = req.body;
