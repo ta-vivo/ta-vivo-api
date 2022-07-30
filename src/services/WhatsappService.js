@@ -79,6 +79,31 @@ class WhatsappService {
       });
   }
 
+  static async sendFail({ phone, check, date, isRetry }) {
+    return this.getAxiosInstance()
+      .post('/messages/send-message-template', {
+        phone: phone,
+        template: {
+          name: isRetry ? 'check_still_down' : 'check_is_down',
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                {
+                  type: 'text',
+                  text: check
+                },
+                {
+                  type: 'text',
+                  text: date
+                }
+              ]
+            }
+          ]
+        }
+      });
+  }
+
 }
 
 export default WhatsappService;
