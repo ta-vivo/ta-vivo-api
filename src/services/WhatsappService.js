@@ -63,6 +63,22 @@ class WhatsappService {
       });
   }
 
+  static async sendTestMessage(phone) {
+    return this.getAxiosInstance()
+      .post('/messages/send-message-template', {
+        phone: phone,
+        template: {
+          name: 'test_ta_vivo_integration',
+          components: [
+            {
+              type: 'body',
+              parameters: []
+            }
+          ]
+        }
+      });
+  }
+
 }
 
 export default WhatsappService;
