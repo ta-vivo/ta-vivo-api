@@ -51,7 +51,6 @@ class IntegrationService {
       }
 
       const uniqueCode = 'w' + Math.random().toString(36).substring(2, 7);
-      const message = `Your unique code is: ${uniqueCode}`;
 
       const exists = await Integration.findOne({ where: { userId: user.id, appUserId: phone } });
 
@@ -65,7 +64,7 @@ class IntegrationService {
         appUserId: phone
       });
 
-      await WhatsappService.sendMessage({ phone, message });
+      await WhatsappService.sendUniqueCode({ phone, code: uniqueCode });
     } catch (error) {
       throw error;
     }
