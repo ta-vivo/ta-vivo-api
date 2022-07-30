@@ -8,6 +8,7 @@ import { isValidDomain, isValidIpv4, isValidIpv4WithProtocol } from '../utils/va
 import MailerService from '../services/MailerService';
 import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
+import WhatsAppService from '../services/WhatsAppService';
 import LogService from './LogService';
 import LimitService from '../services/LimitsService';
 import Audit from '../services/AuditService';
@@ -125,7 +126,7 @@ class CheckService {
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
     }
-    
+
     if (check.timezone) {
       if (!timezones.find(item => item.code === check.timezone)) {
         throw ({ status: 400, message: 'timezone is not valid' });
@@ -210,7 +211,7 @@ class CheckService {
       if (checkForUpdate.target !== currentCheck.target) {
         requireUpdateCron = true;
       }
-      
+
       if (checkForUpdate.timezone !== currentCheck.timezone) {
         requireUpdateCron = true;
       }
@@ -317,7 +318,7 @@ class CheckService {
   static runCheck(check, isRetry = false) {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
-      const { id, target, userId, timezone} = check;
+      const { id, target, userId, timezone } = check;
       const durationStart = performance.now();
       let duration = 0;
 
@@ -460,6 +461,12 @@ class CheckService {
           discordService.sendMessage(integrationCheck.integration.appUserId, integrationCheck.integration.data.token, message);
         } catch (error) {
           console.log('🚨 failed to send discord', error);
+        }
+      } else if (integrationCheck.integration.type === 'whatsapp') {
+        try {
+          WhatsAppService.sendMessage({ phone: integrationCheck.integration.appUserId, message: message });
+        } catch (error) {
+          console.log('🚨 failed to send whatsapp', error);
         }
       }
     });
