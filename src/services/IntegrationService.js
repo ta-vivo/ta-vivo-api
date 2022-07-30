@@ -183,7 +183,7 @@ class IntegrationService {
       } else if (integration.type === 'whatsapp') {
         try {
           return WhatsappService
-            .sendMessage({ phone: integration.appUserId, message: message });
+            .sendTestMessage(integration.appUserId);
         } catch (error) {
           throw { message: 'failed to send Whatsapp test message', status: 500 };
         }
