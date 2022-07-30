@@ -42,6 +42,27 @@ class WhatsappService {
       });
   }
 
+  static async sendUniqueCode({ phone, code }) {
+    return this.getAxiosInstance()
+      .post('/messages/send-message-template', {
+        phone: phone,
+        template: {
+          name: 'unique_code_request',
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                {
+                  type: 'text',
+                  text: `*${code}*`
+                }
+              ]
+            }
+          ]
+        }
+      });
+  }
+
 }
 
 export default WhatsappService;
