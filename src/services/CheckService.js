@@ -340,7 +340,15 @@ class CheckService {
         if (isRetry) {
           const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
           if (mostUpdatedCheck) {
-            this.sendNotification({ message: successMessage, checkIntegrations: mostUpdatedCheck.check_integrations });
+            this.sendNotification({ 
+              message: successMessage, 
+              checkIntegrations: mostUpdatedCheck.check_integrations,
+              meta: {
+                isFailed: false,
+                target: target,
+                date: `${getCurrentDate(timezone)} (${timezone})`
+              }
+             });
           }
           this.stopCheck(check, `${check.id}_retry`);
         }
@@ -364,7 +372,16 @@ class CheckService {
         const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate(timezone)} (${timezone})` : `🚨 ${target} is down at ${getCurrentDate(timezone)} (${timezone})`;
 
         if (mostUpdatedCheck) {
-          this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
+          this.sendNotification({
+            message,
+            checkIntegrations: mostUpdatedCheck.check_integrations,
+            meta: {
+              isFailed: true,
+              isRetry: isRetry,
+              target: target,
+              date: `${getCurrentDate(timezone)} (${timezone})`
+            }
+          });
         }
         console.log(`🔥 send alert for ${target} at ${getCurrentDate(timezone)} (${timezone})`);
       }
@@ -433,7 +450,7 @@ class CheckService {
     return exits ? true : false;
   }
 
-  static async sendNotification({ message, checkIntegrations }) {
+  static async sendNotification({ message, checkIntegrations, meta }) {
     checkIntegrations.forEach(async (integrationCheck) => {
       if (integrationCheck.integration.type === 'telegram') {
         TelegramService.sendMessage({
@@ -464,7 +481,16 @@ class CheckService {
         }
       } else if (integrationCheck.integration.type === 'whatsapp') {
         try {
-          WhatsAppService.sendMessage({ phone: integrationCheck.integration.appUserId, message: message });
+          if (meta.isFailed) {
+            WhatsAppService.sendFail({
+              phone: integrationCheck.integration.appUserId,
+              target: meta.target,
+              date: meta.date,
+              isRetry: meta.isRetry
+            });
+          } else {
+            WhatsAppService.sendSuccess({ phone: integrationCheck.integration.appUserId, target: meta.target, date: meta.date });
+          }
         } catch (error) {
           console.log('🚨 failed to send whatsapp', error);
         }
