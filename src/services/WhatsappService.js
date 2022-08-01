@@ -79,7 +79,7 @@ class WhatsappService {
       });
   }
 
-  static async sendFail({ phone, check, date, isRetry }) {
+  static async sendFail({ phone, target, date, isRetry }) {
     return this.getAxiosInstance()
       .post('/messages/send-message-template', {
         phone: phone,
@@ -91,7 +91,32 @@ class WhatsappService {
               parameters: [
                 {
                   type: 'text',
-                  text: check
+                  text: target
+                },
+                {
+                  type: 'text',
+                  text: date
+                }
+              ]
+            }
+          ]
+        }
+      });
+  }
+
+  static async sendSuccess({ phone, target, date }) {
+    return this.getAxiosInstance()
+      .post('/messages/send-message-template', {
+        phone: phone,
+        template: {
+          name: 'check_is_up',
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                {
+                  type: 'text',
+                  text: target
                 },
                 {
                   type: 'text',
