@@ -60,6 +60,7 @@ $ docker-compose -f docker-compose.dev.yml up -d
 ## Documentation
 
 The full documentation is available on [https://documentation-tavivo.albert.do/back-end/#back-end](https://documentation-tavivo.albert.do/back-end/#back-end)
+
 ---
 
 ## UI
