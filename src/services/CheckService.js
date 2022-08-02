@@ -8,6 +8,7 @@ import { isValidDomain, isValidIpv4, isValidIpv4WithProtocol } from '../utils/va
 import MailerService from '../services/MailerService';
 import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
+import WhatsAppService from '../services/WhatsAppService';
 import LogService from './LogService';
 import LimitService from '../services/LimitsService';
 import Audit from '../services/AuditService';
@@ -125,7 +126,7 @@ class CheckService {
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
     }
-    
+
     if (check.timezone) {
       if (!timezones.find(item => item.code === check.timezone)) {
         throw ({ status: 400, message: 'timezone is not valid' });
@@ -210,7 +211,7 @@ class CheckService {
       if (checkForUpdate.target !== currentCheck.target) {
         requireUpdateCron = true;
       }
-      
+
       if (checkForUpdate.timezone !== currentCheck.timezone) {
         requireUpdateCron = true;
       }
@@ -317,7 +318,7 @@ class CheckService {
   static runCheck(check, isRetry = false) {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
-      const { id, target, userId, timezone} = check;
+      const { id, target, userId, timezone } = check;
       const durationStart = performance.now();
       let duration = 0;
 
@@ -339,7 +340,15 @@ class CheckService {
         if (isRetry) {
           const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
           if (mostUpdatedCheck) {
-            this.sendNotification({ message: successMessage, checkIntegrations: mostUpdatedCheck.check_integrations });
+            this.sendNotification({
+              message: successMessage,
+              checkIntegrations: mostUpdatedCheck.check_integrations,
+              meta: {
+                isFailed: false,
+                target: target,
+                date: `${getCurrentDate(timezone)} (${timezone})`
+              }
+            });
           }
           this.stopCheck(check, `${check.id}_retry`);
         }
@@ -363,7 +372,16 @@ class CheckService {
         const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate(timezone)} (${timezone})` : `🚨 ${target} is down at ${getCurrentDate(timezone)} (${timezone})`;
 
         if (mostUpdatedCheck) {
-          this.sendNotification({ message, checkIntegrations: mostUpdatedCheck.check_integrations });
+          this.sendNotification({
+            message,
+            checkIntegrations: mostUpdatedCheck.check_integrations,
+            meta: {
+              isFailed: true,
+              isRetry: isRetry,
+              target: target,
+              date: `${getCurrentDate(timezone)} (${timezone})`
+            }
+          });
         }
         console.log(`🔥 send alert for ${target} at ${getCurrentDate(timezone)} (${timezone})`);
       }
@@ -432,7 +450,7 @@ class CheckService {
     return exits ? true : false;
   }
 
-  static async sendNotification({ message, checkIntegrations }) {
+  static async sendNotification({ message, checkIntegrations, meta }) {
     checkIntegrations.forEach(async (integrationCheck) => {
       if (integrationCheck.integration.type === 'telegram') {
         TelegramService.sendMessage({
@@ -460,6 +478,19 @@ class CheckService {
           discordService.sendMessage(integrationCheck.integration.appUserId, integrationCheck.integration.data.token, message);
         } catch (error) {
           console.log('🚨 failed to send discord', error);
+        }
+      } else if (integrationCheck.integration.type === 'whatsapp') {
+        if (meta.isFailed) {
+          WhatsAppService.sendFail({
+            phone: integrationCheck.integration.appUserId,
+            target: meta.target,
+            date: meta.date,
+            isRetry: meta.isRetry
+          }).catch(error => {
+            console.log('🚨 failed to send whatsapp', error);
+          });
+        } else {
+          WhatsAppService.sendSuccess({ phone: integrationCheck.integration.appUserId, target: meta.target, date: meta.date });
         }
       }
     });

@@ -3,6 +3,7 @@ import MailerService from '../services/MailerService';
 import TelegramService from '../services/TelegramService';
 import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
+import WhatsappService from './WhatsappService';
 import Audit from './AuditService';
 class IntegrationService {
 
@@ -39,7 +40,32 @@ class IntegrationService {
       MailerService.sendMail({ to: email, subject: 'Email confirmation', body: emailBody });
       return;
     } catch (error) {
-      console.log('🚀 ~ file: IntegrationService.js ~ line 19 ~ IntegrationService ~ requestEmailConfirmation ~ error', error);
+      throw error;
+    }
+  }
+
+  static async requestWhatsappConfirmation({ phone, user }) {
+    try {
+      if (/^[\\+]?[(]?[0-9]{3}[)]?[-\s\\.]?[0-9]{3}[-\s\\.]?[0-9]{4,6}$/im.test(phone) === false || String(phone).length !== 11) {
+        throw { message: 'Invalid phone number format', status: 400 };
+      }
+
+      const uniqueCode = 'w' + Math.random().toString(36).substring(2, 7);
+
+      const exists = await Integration.findOne({ where: { userId: user.id, appUserId: phone } });
+
+      if (exists) {
+        throw { message: 'The integration already exists', status: 400 };
+      }
+
+      await PendingIntegration.create({
+        uniqueCode,
+        integrationType: 'whatsapp',
+        appUserId: phone
+      });
+
+      await WhatsappService.sendUniqueCode({ phone, code: uniqueCode });
+    } catch (error) {
       throw error;
     }
   }
@@ -153,6 +179,13 @@ class IntegrationService {
           discordService.sendMessage(integration.appUserId, integration.data.token, message);
         } catch (error) {
           console.log('🚨 failed to send discord', error);
+        }
+      } else if (integration.type === 'whatsapp') {
+        try {
+          return WhatsappService
+            .sendTestMessage(integration.appUserId);
+        } catch (error) {
+          throw { message: 'failed to send Whatsapp test message', status: 500 };
         }
       }
 
