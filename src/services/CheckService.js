@@ -8,7 +8,7 @@ import { isValidDomain, isValidIpv4, isValidIpv4WithProtocol } from '../utils/va
 import MailerService from '../services/MailerService';
 import SlackService from '../services/SlackService';
 import discordService from '../services/DiscordService';
-import WhatsAppService from '../services/WhatsAppService';
+import WhatsAppService from './WhatsappService';
 import LogService from './LogService';
 import LimitService from '../services/LimitsService';
 import Audit from '../services/AuditService';
