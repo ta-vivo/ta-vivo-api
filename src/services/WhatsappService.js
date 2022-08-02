@@ -9,7 +9,7 @@ class WhatsappService {
    */
   static getAxiosInstance() {
     let instance;
-    if (process.env.ENVIRONMENT !== 'production') {
+    if (process.env.ENVIRONMENT === 'production') {
       instance = axios.create({
         baseURL: process.env.WHATSAPP_SERVICE_API,
         headers: {
@@ -27,7 +27,7 @@ class WhatsappService {
           });
         },
       };
-      console.log('⚠️ In "development" mode the Audit service is disabled');
+      console.log('⚠️ In "development" mode the WhatsApp service is disabled');
     }
 
     return instance;
