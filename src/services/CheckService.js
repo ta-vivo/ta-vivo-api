@@ -340,15 +340,15 @@ class CheckService {
         if (isRetry) {
           const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
           if (mostUpdatedCheck) {
-            this.sendNotification({ 
-              message: successMessage, 
+            this.sendNotification({
+              message: successMessage,
               checkIntegrations: mostUpdatedCheck.check_integrations,
               meta: {
                 isFailed: false,
                 target: target,
                 date: `${getCurrentDate(timezone)} (${timezone})`
               }
-             });
+            });
           }
           this.stopCheck(check, `${check.id}_retry`);
         }
@@ -480,19 +480,17 @@ class CheckService {
           console.log('🚨 failed to send discord', error);
         }
       } else if (integrationCheck.integration.type === 'whatsapp') {
-        try {
-          if (meta.isFailed) {
-            WhatsAppService.sendFail({
-              phone: integrationCheck.integration.appUserId,
-              target: meta.target,
-              date: meta.date,
-              isRetry: meta.isRetry
-            });
-          } else {
-            WhatsAppService.sendSuccess({ phone: integrationCheck.integration.appUserId, target: meta.target, date: meta.date });
-          }
-        } catch (error) {
-          console.log('🚨 failed to send whatsapp', error);
+        if (meta.isFailed) {
+          WhatsAppService.sendFail({
+            phone: integrationCheck.integration.appUserId,
+            target: meta.target,
+            date: meta.date,
+            isRetry: meta.isRetry
+          }).catch(error => {
+            console.log('🚨 failed to send whatsapp', error);
+          });
+        } else {
+          WhatsAppService.sendSuccess({ phone: integrationCheck.integration.appUserId, target: meta.target, date: meta.date });
         }
       }
     });
