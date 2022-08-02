@@ -57,10 +57,14 @@ $ docker-compose -f docker-compose.dev.yml up -d
 ```
 
 ---
+## Documentation
+
+The full documentation is available on [https://documentation-tavivo.albert.do/back-end/#back-end](https://documentation-tavivo.albert.do/back-end/#back-end)
+---
 
 ## UI
 
-Check the repository [https://github.com/itsalb3rt/ta-vivo](https://github.com/itsalb3rt/ta-vivo)
+Check the repository [https://github.com/ta-vivo](https://github.com/ta-vivo)
 
 ---
 
