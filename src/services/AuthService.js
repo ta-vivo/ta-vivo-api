@@ -6,7 +6,7 @@ import LimitsService from '../services/LimitsService';
 import { v4 as uuidv4 } from 'uuid';
 import Audit from './AuditService';
 import supabase from '../utils/supabase';
-
+import timezones from '../utils/timezones.json';
 class AuthService {
 
   static async login({ email, password }) {
@@ -250,7 +250,7 @@ class AuthService {
     }
   }
 
-  static async register({ fullname, email, password, confirmPassword }) {
+  static async register({ fullname, email, password, confirmPassword, timezone }) {
     try {
       if (password !== confirmPassword) {
         throw ({ status: 400, message: 'Passwords do not match' });
@@ -276,10 +276,17 @@ class AuthService {
         },
       });
 
+      let userTimezone = 'UTC';
+
+      if (timezones.find(item => item.code === timezone)) {
+        userTimezone = timezone;
+      }
+
       const userCreated = await User.create({
         fullname,
         email,
-        roleId: basicRole.id
+        roleId: basicRole.id,
+        timezone: userTimezone
       });
 
       const hashedPassword = await bcrypt.hash(password, 10);
