@@ -24,10 +24,10 @@ class AuthController {
   }
 
   static async register(req, res) {
-    const { fullname, email, password, confirmPassword } = req.body;
+    const { fullname, email, password, confirmPassword, timezone } = req.body;
     try {
       const entityCreated = await AuthService.register({
-        fullname, email, password, confirmPassword
+        fullname, email, password, confirmPassword, timezone
       });
       return res.json(Response.get('success', entityCreated));
     } catch (error) {
