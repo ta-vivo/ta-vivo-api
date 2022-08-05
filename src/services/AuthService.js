@@ -48,7 +48,7 @@ class AuthService {
     }
   }
 
-  static async google({ access_token }) {
+  static async google({ access_token, timezone }) {
     try {
       return supabase.auth.api.getUser(access_token)
         .then(async (supabaseResponse) => {
@@ -72,8 +72,15 @@ class AuthService {
             return { token: response.token };
           } else {
 
+            let userTimezone = 'UTC';
+
+            if (timezones.find(item => item.code === timezone)) {
+              userTimezone = timezone;
+            }
+
             const userCreated = await this.registerFromSupabase({
               supabaseUser: supabaseResponse.user,
+              timezone: userTimezone,
               provider: 'google_provider'
             });
 
@@ -329,7 +336,7 @@ class AuthService {
     }
   }
 
-  static async registerFromSupabase({ supabaseUser, provider }) {
+  static async registerFromSupabase({ supabaseUser, provider, timezone }) {
     const basicRole = await Role.findOne({
       where: {
         name: 'basic',
@@ -340,7 +347,8 @@ class AuthService {
       fullname: supabaseUser.user_metadata.full_name,
       email: supabaseUser.email,
       roleId: basicRole.id,
-      active: true
+      active: true,
+      timezone: timezone || 'UTC'
     });
 
     await UserCredential.create({
