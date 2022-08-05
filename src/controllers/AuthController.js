@@ -24,10 +24,10 @@ class AuthController {
   }
 
   static async register(req, res) {
-    const { fullname, email, password, confirmPassword } = req.body;
+    const { fullname, email, password, confirmPassword, timezone } = req.body;
     try {
       const entityCreated = await AuthService.register({
-        fullname, email, password, confirmPassword
+        fullname, email, password, confirmPassword, timezone
       });
       return res.json(Response.get('success', entityCreated));
     } catch (error) {
@@ -150,9 +150,9 @@ class AuthController {
   }
 
   static async google(req, res) {
-    const { access_token } = req.body;
+    const { access_token, timezone } = req.body;
     try {
-      const user = await AuthService.google({ access_token });
+      const user = await AuthService.google({ access_token, timezone: timezone });
       return res.json(Response.get('success', user));
     } catch (error) {
       res.status(error.status || 500).json({
@@ -163,9 +163,9 @@ class AuthController {
   }
 
   static async discord(req, res) {
-    const { access_token } = req.body;
+    const { access_token, timezone } = req.body;
     try {
-      const user = await AuthService.discord({ access_token });
+      const user = await AuthService.discord({ access_token, timezone: timezone });
       return res.json(Response.get('success', user));
     } catch (error) {
       res.status(error.status || 500).json({
@@ -176,9 +176,9 @@ class AuthController {
   }
 
   static async slack(req, res) {
-    const { access_token } = req.body;
+    const { access_token, timezone } = req.body;
     try {
-      const user = await AuthService.slack({ access_token });
+      const user = await AuthService.slack({ access_token, timezone: timezone });
       return res.json(Response.get('success', user));
     }
     catch (error) {
@@ -190,9 +190,9 @@ class AuthController {
   }
 
   static async github(req, res) {
-    const { access_token } = req.body;
+    const { access_token, timezone } = req.body;
     try {
-      const user = await AuthService.github({ access_token });
+      const user = await AuthService.github({ access_token, timezone: timezone });
       return res.json(Response.get('success', user));
     }
     catch (error) {

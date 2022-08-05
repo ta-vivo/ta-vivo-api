@@ -6,7 +6,7 @@ import LimitsService from '../services/LimitsService';
 import { v4 as uuidv4 } from 'uuid';
 import Audit from './AuditService';
 import supabase from '../utils/supabase';
-
+import timezones from '../utils/timezones.json';
 class AuthService {
 
   static async login({ email, password }) {
@@ -48,7 +48,7 @@ class AuthService {
     }
   }
 
-  static async google({ access_token }) {
+  static async google({ access_token, timezone }) {
     try {
       return supabase.auth.api.getUser(access_token)
         .then(async (supabaseResponse) => {
@@ -74,7 +74,8 @@ class AuthService {
 
             const userCreated = await this.registerFromSupabase({
               supabaseUser: supabaseResponse.user,
-              provider: 'google_provider'
+              provider: 'google_provider',
+              timezone: this.getValidTimezone(timezone)
             });
 
             const response = await this.me({ user: userCreated });
@@ -89,7 +90,7 @@ class AuthService {
     }
   }
 
-  static async discord({ access_token }) {
+  static async discord({ access_token, timezone }) {
     try {
       return supabase.auth.api.getUser(access_token)
         .then(async (supabaseResponse) => {
@@ -114,7 +115,8 @@ class AuthService {
 
             const userCreated = await this.registerFromSupabase({
               supabaseUser: supabaseResponse.user,
-              provider: 'discord_provider'
+              provider: 'discord_provider',
+              timezone: this.getValidTimezone(timezone)
             });
 
             const response = await this.me({ user: userCreated });
@@ -128,7 +130,7 @@ class AuthService {
     }
   }
 
-  static async slack({ access_token }) {
+  static async slack({ access_token, timezone }) {
     try {
       return supabase.auth.api.getUser(access_token)
         .then(async (supabaseResponse) => {
@@ -153,7 +155,8 @@ class AuthService {
 
             const userCreated = await this.registerFromSupabase({
               supabaseUser: supabaseResponse.user,
-              provider: 'slack_provider'
+              provider: 'slack_provider',
+              timezone: this.getValidTimezone(timezone)
             });
 
             const response = await this.me({ user: userCreated });
@@ -167,7 +170,7 @@ class AuthService {
     }
   }
 
-  static async github({ access_token }) {
+  static async github({ access_token, timezone }) {
     try {
       return supabase.auth.api.getUser(access_token)
         .then(async (supabaseResponse) => {
@@ -192,7 +195,8 @@ class AuthService {
 
             const userCreated = await this.registerFromSupabase({
               supabaseUser: supabaseResponse.user,
-              provider: 'github_provider'
+              provider: 'github_provider',
+              timezone: this.getValidTimezone(timezone)
             });
 
             const response = await this.me({ user: userCreated });
@@ -250,7 +254,7 @@ class AuthService {
     }
   }
 
-  static async register({ fullname, email, password, confirmPassword }) {
+  static async register({ fullname, email, password, confirmPassword, timezone }) {
     try {
       if (password !== confirmPassword) {
         throw ({ status: 400, message: 'Passwords do not match' });
@@ -276,10 +280,17 @@ class AuthService {
         },
       });
 
+      let userTimezone = 'UTC';
+
+      if (timezones.find(item => item.code === timezone)) {
+        userTimezone = timezone;
+      }
+
       const userCreated = await User.create({
         fullname,
         email,
-        roleId: basicRole.id
+        roleId: basicRole.id,
+        timezone: userTimezone
       });
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -322,7 +333,7 @@ class AuthService {
     }
   }
 
-  static async registerFromSupabase({ supabaseUser, provider }) {
+  static async registerFromSupabase({ supabaseUser, provider, timezone }) {
     const basicRole = await Role.findOne({
       where: {
         name: 'basic',
@@ -333,7 +344,8 @@ class AuthService {
       fullname: supabaseUser.user_metadata.full_name,
       email: supabaseUser.email,
       roleId: basicRole.id,
-      active: true
+      active: true,
+      timezone: timezone || 'UTC'
     });
 
     await UserCredential.create({
@@ -568,6 +580,21 @@ class AuthService {
   static isPasswordSecure(password) {
     const regex = /^(?=.*[a-z])(?=.*[0-9])(?=.{8,})/;
     return regex.test(password);
+  }
+
+/**
+ * It takes a timezone as an argument and returns a valid timezone
+ * @param timezone - The timezone you want to convert to.
+ * @returns The timezone code that is valid.
+ */
+  static getValidTimezone(timezone) {
+    let newTimezone = 'UTC';
+
+    if (timezones.find(item => item.code === timezone)) {
+      newTimezone = timezone;
+    }
+
+    return newTimezone;
   }
 
 }
