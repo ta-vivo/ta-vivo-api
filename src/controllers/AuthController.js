@@ -163,9 +163,9 @@ class AuthController {
   }
 
   static async discord(req, res) {
-    const { access_token } = req.body;
+    const { access_token, timezone } = req.body;
     try {
-      const user = await AuthService.discord({ access_token });
+      const user = await AuthService.discord({ access_token, timezone: timezone });
       return res.json(Response.get('success', user));
     } catch (error) {
       res.status(error.status || 500).json({
@@ -176,9 +176,9 @@ class AuthController {
   }
 
   static async slack(req, res) {
-    const { access_token } = req.body;
+    const { access_token, timezone } = req.body;
     try {
-      const user = await AuthService.slack({ access_token });
+      const user = await AuthService.slack({ access_token, timezone: timezone });
       return res.json(Response.get('success', user));
     }
     catch (error) {
@@ -190,9 +190,9 @@ class AuthController {
   }
 
   static async github(req, res) {
-    const { access_token } = req.body;
+    const { access_token, timezone } = req.body;
     try {
-      const user = await AuthService.github({ access_token });
+      const user = await AuthService.github({ access_token, timezone: timezone });
       return res.json(Response.get('success', user));
     }
     catch (error) {
