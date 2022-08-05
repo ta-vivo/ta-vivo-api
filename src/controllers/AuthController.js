@@ -150,9 +150,9 @@ class AuthController {
   }
 
   static async google(req, res) {
-    const { access_token } = req.body;
+    const { access_token, timezone } = req.body;
     try {
-      const user = await AuthService.google({ access_token });
+      const user = await AuthService.google({ access_token, timezone: timezone });
       return res.json(Response.get('success', user));
     } catch (error) {
       res.status(error.status || 500).json({
