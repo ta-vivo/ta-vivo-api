@@ -135,7 +135,8 @@ class IntegrationService {
         ...criterions,
         include: [{
           model: CheckIntegration
-        }]
+        }],
+        distinct: true
       });
       return { rows, count: rows.length, total: count };
     } catch (error) {
