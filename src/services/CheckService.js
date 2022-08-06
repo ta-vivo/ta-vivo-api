@@ -259,6 +259,7 @@ class CheckService {
     try {
       const { rows, count } = await Checks.findAndCountAll({
         ...criterions,
+        distinct: true,
         include: [{ model: CheckIntegration, include: [{ model: Integration }] }]
       });
       return { rows, count: rows.length, total: count };
