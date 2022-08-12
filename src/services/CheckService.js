@@ -1,8 +1,9 @@
 import axios from 'axios';
 import cron from 'cron';
-import { Checks, CheckLogs, CheckIntegration, Integration, Role } from '../models/';
+import { Checks, CheckLogs, CheckIntegration, Integration, Role, CheckAuthorization } from '../models/';
 import TelegramService from './TelegramService';
 import { Op } from 'sequelize';
+import { sequelize } from '../database/database';
 import cronTimeTable from '../utils/cronTimeList';
 import { isValidDomain, isValidIpv4, isValidIpv4WithProtocol } from '../utils/validators';
 import MailerService from '../services/MailerService';
@@ -14,6 +15,7 @@ import LimitService from '../services/LimitsService';
 import Audit from '../services/AuditService';
 import { getCurrentDate } from '../utils/time';
 import timezones from '../utils/timezones.json';
+import { encrypt } from '../utils/crypto';
 
 let cronJobs = {};
 
@@ -28,8 +30,11 @@ class CheckService {
       userId: newCheck.user.id,
       retryOnFail: newCheck.retryOnFail ? newCheck.retryOnFail : false,
       onFailPeriodToCheck: newCheck.onFailPeriodToCheck ? newCheck.onFailPeriodToCheck : null,
-      onFailperiodToCheckLabel: newCheck.onFailperiodToCheckLabel ? newCheck.onFailperiodToCheckLabel : null
+      onFailperiodToCheckLabel: newCheck.onFailperiodToCheckLabel ? newCheck.onFailperiodToCheckLabel : null,
+      authorizationHeader: newCheck.authorizationHeader ? newCheck.authorizationHeader : null,
     };
+
+    const t = await sequelize.transaction();
 
     const hasAlreadyReachedMaxChecks = await LimitService.hasAlreadyReachedMaxChecks(newCheck.user.id);
     if (hasAlreadyReachedMaxChecks) {
@@ -97,16 +102,28 @@ class CheckService {
       checkForCreate.periodToCheck = periodToCheck;
       checkForCreate.periodToCheckLabel = cronTimeTable.find(item => item.label === newCheck.periodToCheck).label;
 
-      let entityCreated = await Checks.create(checkForCreate);
+      let entityCreated = await Checks.create(checkForCreate, { transaction: t });
       entityCreated = JSON.parse(JSON.stringify(entityCreated));
 
       if (newCheck.addIntegrations) {
         this.addIntegrations(entityCreated.id, newCheck.addIntegrations);
       }
 
+      if (checkForCreate.authorizationHeader && checkForCreate.authorizationHeader.name && checkForCreate.authorizationHeader.token) {
+        const encryptedHeaders = encrypt(checkForCreate.authorizationHeader.token);
+
+        await CheckAuthorization.create({
+          checkId: entityCreated.id,
+          headerName: checkForCreate.authorizationHeader.name,
+          encryptedToken: encryptedHeaders
+        }, { transaction: t });
+      }
+
+      await t.commit();
       this.runCheck(entityCreated);
       return entityCreated;
     } catch (error) {
+      t.rollback();
       console.log('🚀 ~ file: CheckService.js ~ line 62 ~ CheckService ~ create ~ error', error);
       throw error;
     }
