@@ -204,6 +204,34 @@ class CheckService {
         throw ({ status: 400, message: 'periodToCheck is not valid' });
       }
 
+      if (check.authorizationHeader) {
+        const encryptedHeaders = check.authorizationHeader.token ? encrypt(check.authorizationHeader.token) : null;
+
+        const exist = await CheckAuthorization.findOne({ where: { checkId: id } });
+        const authorizationToUpdate = {};
+
+        if (exist) {
+          if (check.authorizationHeader.name !== exist.headerName) {
+            authorizationToUpdate.headerName = check.authorizationHeader.name;
+          }
+
+          if (encryptedHeaders) {
+            authorizationToUpdate.encryptedToken = encryptedHeaders;
+          }
+
+          await CheckAuthorization.update({
+            checkId: id,
+            ...authorizationToUpdate
+          }, { where: { checkId: id } });
+        } else {
+          await CheckAuthorization.create({
+            checkId: id,
+            headerName: check.authorizationHeader.name,
+            encryptedToken: encryptedHeaders
+          });
+        }
+      }
+
       checkForUpdate.periodToCheck = periodToCheck.value;
       checkForUpdate.periodToCheckLabel = periodToCheck.label;
 
