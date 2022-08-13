@@ -204,6 +204,9 @@ class CheckService {
         throw ({ status: 400, message: 'periodToCheck is not valid' });
       }
 
+      let requireUpdateCron = false;
+      let requireStopCron = false;
+
       if (check.authorizationHeader) {
         const encryptedHeaders = check.authorizationHeader.token ? encrypt(check.authorizationHeader.token) : null;
 
@@ -230,6 +233,8 @@ class CheckService {
             encryptedToken: encryptedHeaders
           });
         }
+
+        requireUpdateCron = true;
       }
 
       checkForUpdate.periodToCheck = periodToCheck.value;
@@ -249,9 +254,6 @@ class CheckService {
 
       let checkUpdated = await this.getById({ id, user });
       checkUpdated = JSON.parse(JSON.stringify(checkUpdated));
-
-      let requireUpdateCron = false;
-      let requireStopCron = false;
 
       if (checkForUpdate.target !== currentCheck.target) {
         requireUpdateCron = true;
