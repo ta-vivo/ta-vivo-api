@@ -100,6 +100,36 @@ class CheckController {
     }
   }
 
+  static async disable(req, res) {
+    const { id } = req.params;
+
+    try {
+      const updateCheck = await CheckService.disable({id, user: req.user});
+
+      return res.json(Response.get('Check Updated', updateCheck));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
+  static async enable(req, res) {
+    const { id } = req.params;
+
+    try {
+      const updateCheck = await CheckService.enable({id, user: req.user});
+
+      return res.json(Response.get('Check Updated', updateCheck));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
   static async delete(req, res) {
     try {
       await CheckService.delete({ id: req.params.id, user: req.user });
