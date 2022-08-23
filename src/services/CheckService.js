@@ -271,6 +271,23 @@ class CheckService {
     }
   }
 
+  static async enable({id, user}){
+    try {
+      const check = await Checks.findOne({ where: { id, userId: user.id } });
+
+      if (!check) {
+        throw ({ status: 404, message: 'Check not found' });
+      }
+
+      await Checks.update({ enabled: true }, { where: { id, userId: user.id } });
+      this.runCheck(check);
+      Audit.onUpdate(user, { entity: 'check', old: check, edited: { enabled: true } });
+      return check;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async getAll(params) {
     const { criterions } = params;
 
