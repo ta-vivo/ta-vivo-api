@@ -8,6 +8,7 @@ router.get('/', verifyToken, CheckController.getAll);
 router.get('/:id', verifyToken, CheckController.getById);
 router.get('/:id/logs', verifyToken, CheckController.getLogsByCheckId);
 router.put('/:id', verifyToken, CheckController.update);
+router.put('/:id/disable', verifyToken, CheckController.disable);
 router.post('/', verifyToken, CheckController.create);
 router.delete('/:id', verifyToken, CheckController.delete);
 
