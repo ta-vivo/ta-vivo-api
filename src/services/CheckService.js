@@ -280,6 +280,11 @@ class CheckService {
       }
 
       await Checks.update({ enabled: true }, { where: { id, userId: user.id } });
+      // stop to avoid cron duplicate
+      this.stopCheck(check);
+      this.stopCheck(check, `${check.id}_retry`);
+
+      // Now run the check
       this.runCheck(check);
       Audit.onUpdate(user, { entity: 'check', old: check, edited: { enabled: true } });
       return check;
