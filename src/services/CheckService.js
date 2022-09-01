@@ -55,7 +55,13 @@ class CheckService {
     }
 
     try {
-      await axios.get(checkForCreate.target, { timeout: 5000 });
+      const headers = {};
+      if (newCheck.authorizationHeader) {
+        headers[newCheck.authorizationHeader.name] = newCheck.authorizationHeader.token;
+      }
+
+      await axios.get(checkForCreate.target, { timeout: 5000, headers });
+
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
     }
