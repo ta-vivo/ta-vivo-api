@@ -144,7 +144,14 @@ class CheckService {
 
     try {
       if (check.target) {
-        await axios.get(check.target, { timeout: 5000 });
+
+        const headers = {};
+        
+        if (check.authorizationHeader) {
+          headers[check.authorizationHeader.name] = check.authorizationHeader.token;
+        }
+
+        await axios.get(check.target, { timeout: 5000, headers });
       }
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
