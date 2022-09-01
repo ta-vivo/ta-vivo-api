@@ -375,6 +375,16 @@ class CheckService {
         where: { id, userId: user.id },
         include: [{ model: CheckIntegration, include: [{ model: Integration }] }]
       });
+      check = JSON.parse(JSON.stringify(check));
+      
+      const checkAuthorization = await CheckAuthorization.findOne({ where: { checkId: id } });
+      
+      if (checkAuthorization) {
+        check.authorizationHeader = {
+          name: checkAuthorization.headerName
+        };
+      }
+
       return check;
     } catch (error) {
       throw error;
