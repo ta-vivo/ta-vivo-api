@@ -273,6 +273,15 @@ class CheckService {
       let checkUpdated = await this.getById({ id, user });
       checkUpdated = JSON.parse(JSON.stringify(checkUpdated));
 
+      const authorizationHeader = await CheckAuthorization.findOne({ where: { checkId: id } });
+
+      if (authorizationHeader) {
+        checkUpdated.authorizationHeader = {
+          name: authorizationHeader.headerName,
+          token: decrypt(authorizationHeader.encryptedToken)
+        };
+      }
+
       if (checkForUpdate.target !== currentCheck.target) {
         requireUpdateCron = true;
       }
