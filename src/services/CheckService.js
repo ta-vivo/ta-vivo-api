@@ -357,10 +357,21 @@ class CheckService {
 
   static async enable({id, user}){
     try {
-      const check = await Checks.findOne({ where: { id, userId: user.id } });
+      let check = await Checks.findOne({ where: { id, userId: user.id } });
 
       if (!check) {
         throw ({ status: 404, message: 'Check not found' });
+      }
+
+      check = JSON.parse(JSON.stringify(check));
+
+      const authorizationHeader = await CheckAuthorization.findOne({ where: { checkId: id } });
+
+      if (authorizationHeader) {
+        check.authorizationHeader = {
+          name: authorizationHeader.headerName,
+          token: decrypt(authorizationHeader.encryptedToken)
+        };
       }
 
       await Checks.update({ enabled: true }, { where: { id, userId: user.id } });
