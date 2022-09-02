@@ -151,7 +151,7 @@ class CheckService {
       if (check.target) {
 
         const headers = {};
-        
+
         if (check.authorizationHeader && check.authorizationHeader.name && check.authorizationHeader.token) {
           headers[check.authorizationHeader.name] = check.authorizationHeader.token;
         } else if (!check.removeAuthorizationHeader) {
@@ -337,7 +337,7 @@ class CheckService {
     }
   }
 
-  static async disable({id, user}){
+  static async disable({ id, user }) {
     try {
       const check = await Checks.findOne({ where: { id, userId: user.id } });
 
@@ -355,7 +355,7 @@ class CheckService {
     }
   }
 
-  static async enable({id, user}){
+  static async enable({ id, user }) {
     try {
       let check = await Checks.findOne({ where: { id, userId: user.id } });
 
@@ -395,7 +395,13 @@ class CheckService {
       const { rows, count } = await Checks.findAndCountAll({
         ...criterions,
         distinct: true,
-        include: [{ model: CheckIntegration, include: [{ model: Integration }] }]
+        include: [
+          {
+            model: CheckIntegration,
+            include: [{ model: Integration }]
+          },
+          { model: CheckAuthorization, attributes: ['headerName'], require: false }
+        ]
       });
       return { rows, count: rows.length, total: count };
     } catch (error) {
@@ -411,9 +417,9 @@ class CheckService {
         include: [{ model: CheckIntegration, include: [{ model: Integration }] }]
       });
       check = JSON.parse(JSON.stringify(check));
-      
+
       const checkAuthorization = await CheckAuthorization.findOne({ where: { checkId: id } });
-      
+
       if (checkAuthorization) {
         check.authorizationHeader = {
           name: checkAuthorization.headerName
