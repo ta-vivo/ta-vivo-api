@@ -19,6 +19,6 @@ const CheckAuthorization = sequelize.define('check_authorizations', {
 }, {});
 
 CheckAuthorization.belongsTo(Checks);
-Checks.hasMany(CheckAuthorization, { onDelete: 'cascade', hook: true });
+Checks.hasOne(CheckAuthorization, { onDelete: 'cascade', hook: true });
 
 export default CheckAuthorization;
