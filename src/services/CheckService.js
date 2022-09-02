@@ -15,7 +15,7 @@ import LimitService from '../services/LimitsService';
 import Audit from '../services/AuditService';
 import { getCurrentDate } from '../utils/time';
 import timezones from '../utils/timezones.json';
-import { encrypt } from '../utils/crypto';
+import { encrypt, decrypt } from '../utils/crypto';
 
 let cronJobs = {};
 
@@ -117,6 +117,11 @@ class CheckService {
 
       if (checkForCreate.authorizationHeader && checkForCreate.authorizationHeader.name && checkForCreate.authorizationHeader.token) {
         const encryptedHeaders = encrypt(checkForCreate.authorizationHeader.token);
+
+        entityCreated.authorizationHeader = {
+          name: checkForCreate.authorizationHeader.name,
+          token: checkForCreate.authorizationHeader.token,
+        };
 
         await CheckAuthorization.create({
           checkId: entityCreated.id,
@@ -443,13 +448,15 @@ class CheckService {
   static runCheck(check, isRetry = false) {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
-      const { id, target, userId, timezone } = check;
+      const { id, target, userId, timezone, authorizationHeader } = check;
       const durationStart = performance.now();
       let duration = 0;
+      const headers = authorizationHeader ? { [authorizationHeader.name]: authorizationHeader.token } : {};
 
       try {
         await axios.get(target, {
-          timeout: 5000
+          timeout: 5000,
+          headers: { ...headers }
         });
         duration = (performance.now() - durationStart).toFixed(5);
         const successMessage = `✅ ${target} is alive at ${getCurrentDate(timezone)} (${timezone})`;
