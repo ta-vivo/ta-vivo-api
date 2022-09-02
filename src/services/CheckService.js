@@ -147,8 +147,13 @@ class CheckService {
 
         const headers = {};
         
-        if (check.authorizationHeader) {
+        if (check.authorizationHeader && check.authorizationHeader.name && check.authorizationHeader.token) {
           headers[check.authorizationHeader.name] = check.authorizationHeader.token;
+        } else {
+          const authorizationHeader = await CheckAuthorization.findOne({ where: { checkId: id } });
+          if (authorizationHeader) {
+            headers[authorizationHeader.headerName] = decrypt(authorizationHeader.encryptedToken);
+          }
         }
 
         await axios.get(check.target, { timeout: 5000, headers });
