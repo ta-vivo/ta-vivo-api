@@ -385,7 +385,7 @@ class CheckService {
   static async getById({ id, user }) {
 
     try {
-      const check = await Checks.findOne({
+      let check = await Checks.findOne({
         where: { id, userId: user.id },
         include: [{ model: CheckIntegration, include: [{ model: Integration }] }]
       });
