@@ -154,7 +154,7 @@ class CheckService {
         
         if (check.authorizationHeader && check.authorizationHeader.name && check.authorizationHeader.token) {
           headers[check.authorizationHeader.name] = check.authorizationHeader.token;
-        } else {
+        } else if (!check.removeAuthorizationHeader) {
           const authorizationHeader = await CheckAuthorization.findOne({ where: { checkId: id } });
           if (authorizationHeader) {
             headers[authorizationHeader.headerName] = decrypt(authorizationHeader.encryptedToken);
@@ -229,6 +229,11 @@ class CheckService {
 
       let requireUpdateCron = false;
       let requireStopCron = false;
+
+      if (check.removeAuthorizationHeader) {
+        await CheckAuthorization.destroy({ where: { checkId: id } });
+        requireUpdateCron = true;
+      }
 
       if (check.authorizationHeader) {
         const encryptedHeaders = check.authorizationHeader.token ? encrypt(check.authorizationHeader.token) : null;
