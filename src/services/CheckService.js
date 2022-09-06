@@ -513,7 +513,13 @@ class CheckService {
           duration: duration,
           timezone: timezone
         });
+
         LogService.cleanByRole({ checkId: id, userId: userId });
+        let status = null;
+
+        if (error.response && error.response.status) {
+          status = error.response.status;
+        }
 
         if (check.retryOnFail && !cronJobs[`${id}_retry`] && !isRetry) {
           console.log('Retry cron job for check: ', check.name);
@@ -523,7 +529,9 @@ class CheckService {
         }
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
-        const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate(timezone)} (${timezone})` : `🚨 ${target} is down at ${getCurrentDate(timezone)} (${timezone})`;
+        const message = isRetry ?
+          `🚨 ${target} still down at ${getCurrentDate(timezone)} (${timezone}) ${status ? ' status: ' + status : ''}`
+          : `🚨 ${target} is down at ${getCurrentDate(timezone)} (${timezone}) ${status ? ' status: ' + status : ''}`;
 
         if (mostUpdatedCheck) {
           this.sendNotification({
