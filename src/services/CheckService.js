@@ -60,7 +60,7 @@ class CheckService {
         headers[newCheck.authorizationHeader.name] = newCheck.authorizationHeader.token;
       }
 
-      await axios.get(checkForCreate.target, { timeout: 5000, headers });
+      await axios.head(checkForCreate.target, { timeout: 5000, headers });
 
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
@@ -161,7 +161,7 @@ class CheckService {
           }
         }
 
-        await axios.get(check.target, { timeout: 5000, headers });
+        await axios.head(check.target, { timeout: 5000, headers });
       }
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
@@ -476,7 +476,7 @@ class CheckService {
       const headers = authorizationHeader ? { [authorizationHeader.name]: authorizationHeader.token } : {};
 
       try {
-        await axios.get(target, {
+        await axios.head(target, {
           timeout: 5000,
           headers: { ...headers }
         });
