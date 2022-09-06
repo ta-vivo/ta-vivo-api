@@ -164,7 +164,20 @@ class CheckService {
         await axios.head(check.target, { timeout: 5000, headers });
       }
     } catch (error) {
-      throw ({ status: 400, message: 'The target is unreachable' });
+
+      let customMessage = null;
+      let statusText = null;
+
+      if (error.response && error.response.status) {
+        customMessage = `The target is unreachable. Error: ${error.response.status}`;
+      }
+
+      if (error.response && error.response.statusText) {
+        statusText = error.response.statusText;
+        customMessage = `${customMessage} - ${statusText}`;
+      }
+
+      throw ({ status: 400, message: customMessage || 'The target is unreachable' });
     }
 
     if (check.timezone) {
