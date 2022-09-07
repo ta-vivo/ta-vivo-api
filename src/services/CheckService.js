@@ -1,8 +1,9 @@
 import axios from 'axios';
 import cron from 'cron';
-import { Checks, CheckLogs, CheckIntegration, Integration, Role } from '../models/';
+import { Checks, CheckLogs, CheckIntegration, Integration, Role, CheckAuthorization } from '../models/';
 import TelegramService from './TelegramService';
 import { Op } from 'sequelize';
+import { sequelize } from '../database/database';
 import cronTimeTable from '../utils/cronTimeList';
 import { isValidDomain, isValidIpv4, isValidIpv4WithProtocol } from '../utils/validators';
 import MailerService from '../services/MailerService';
@@ -14,6 +15,7 @@ import LimitService from '../services/LimitsService';
 import Audit from '../services/AuditService';
 import { getCurrentDate } from '../utils/time';
 import timezones from '../utils/timezones.json';
+import { encrypt, decrypt } from '../utils/crypto';
 
 let cronJobs = {};
 
@@ -28,8 +30,11 @@ class CheckService {
       userId: newCheck.user.id,
       retryOnFail: newCheck.retryOnFail ? newCheck.retryOnFail : false,
       onFailPeriodToCheck: newCheck.onFailPeriodToCheck ? newCheck.onFailPeriodToCheck : null,
-      onFailperiodToCheckLabel: newCheck.onFailperiodToCheckLabel ? newCheck.onFailperiodToCheckLabel : null
+      onFailperiodToCheckLabel: newCheck.onFailperiodToCheckLabel ? newCheck.onFailperiodToCheckLabel : null,
+      authorizationHeader: newCheck.authorizationHeader ? newCheck.authorizationHeader : null,
     };
+
+    const t = await sequelize.transaction();
 
     const hasAlreadyReachedMaxChecks = await LimitService.hasAlreadyReachedMaxChecks(newCheck.user.id);
     if (hasAlreadyReachedMaxChecks) {
@@ -50,7 +55,13 @@ class CheckService {
     }
 
     try {
-      await axios.get(checkForCreate.target, { timeout: 5000 });
+      const headers = {};
+      if (newCheck.authorizationHeader) {
+        headers[newCheck.authorizationHeader.name] = newCheck.authorizationHeader.token;
+      }
+
+      await axios.head(checkForCreate.target, { timeout: 5000, headers });
+
     } catch (error) {
       throw ({ status: 400, message: 'The target is unreachable' });
     }
@@ -97,16 +108,33 @@ class CheckService {
       checkForCreate.periodToCheck = periodToCheck;
       checkForCreate.periodToCheckLabel = cronTimeTable.find(item => item.label === newCheck.periodToCheck).label;
 
-      let entityCreated = await Checks.create(checkForCreate);
+      let entityCreated = await Checks.create(checkForCreate, { transaction: t });
       entityCreated = JSON.parse(JSON.stringify(entityCreated));
 
       if (newCheck.addIntegrations) {
         this.addIntegrations(entityCreated.id, newCheck.addIntegrations);
       }
 
+      if (checkForCreate.authorizationHeader && checkForCreate.authorizationHeader.name && checkForCreate.authorizationHeader.token) {
+        const encryptedHeaders = encrypt(checkForCreate.authorizationHeader.token);
+
+        entityCreated.authorizationHeader = {
+          name: checkForCreate.authorizationHeader.name,
+          token: checkForCreate.authorizationHeader.token,
+        };
+
+        await CheckAuthorization.create({
+          checkId: entityCreated.id,
+          headerName: checkForCreate.authorizationHeader.name,
+          encryptedToken: encryptedHeaders
+        }, { transaction: t });
+      }
+
+      await t.commit();
       this.runCheck(entityCreated);
       return entityCreated;
     } catch (error) {
+      t.rollback();
       console.log('🚀 ~ file: CheckService.js ~ line 62 ~ CheckService ~ create ~ error', error);
       throw error;
     }
@@ -121,10 +149,35 @@ class CheckService {
 
     try {
       if (check.target) {
-        await axios.get(check.target, { timeout: 5000 });
+
+        const headers = {};
+
+        if (check.authorizationHeader && check.authorizationHeader.name && check.authorizationHeader.token) {
+          headers[check.authorizationHeader.name] = check.authorizationHeader.token;
+        } else if (!check.removeAuthorizationHeader) {
+          const authorizationHeader = await CheckAuthorization.findOne({ where: { checkId: id } });
+          if (authorizationHeader) {
+            headers[authorizationHeader.headerName] = decrypt(authorizationHeader.encryptedToken);
+          }
+        }
+
+        await axios.head(check.target, { timeout: 5000, headers });
       }
     } catch (error) {
-      throw ({ status: 400, message: 'The target is unreachable' });
+
+      let customMessage = null;
+      let statusText = null;
+
+      if (error.response && error.response.status) {
+        customMessage = `The target is unreachable. Error: ${error.response.status}`;
+      }
+
+      if (error.response && error.response.statusText) {
+        statusText = error.response.statusText;
+        customMessage = `${customMessage} - ${statusText}`;
+      }
+
+      throw ({ status: 400, message: customMessage || 'The target is unreachable' });
     }
 
     if (check.timezone) {
@@ -187,6 +240,44 @@ class CheckService {
         throw ({ status: 400, message: 'periodToCheck is not valid' });
       }
 
+      let requireUpdateCron = false;
+      let requireStopCron = false;
+
+      if (check.removeAuthorizationHeader) {
+        await CheckAuthorization.destroy({ where: { checkId: id } });
+        requireUpdateCron = true;
+      }
+
+      if (check.authorizationHeader) {
+        const encryptedHeaders = check.authorizationHeader.token ? encrypt(check.authorizationHeader.token) : null;
+
+        const exist = await CheckAuthorization.findOne({ where: { checkId: id } });
+        const authorizationToUpdate = {};
+
+        if (exist) {
+          if (check.authorizationHeader.name !== exist.headerName) {
+            authorizationToUpdate.headerName = check.authorizationHeader.name;
+          }
+
+          if (encryptedHeaders) {
+            authorizationToUpdate.encryptedToken = encryptedHeaders;
+          }
+
+          await CheckAuthorization.update({
+            checkId: id,
+            ...authorizationToUpdate
+          }, { where: { checkId: id } });
+        } else {
+          await CheckAuthorization.create({
+            checkId: id,
+            headerName: check.authorizationHeader.name,
+            encryptedToken: encryptedHeaders
+          });
+        }
+
+        requireUpdateCron = true;
+      }
+
       checkForUpdate.periodToCheck = periodToCheck.value;
       checkForUpdate.periodToCheckLabel = periodToCheck.label;
 
@@ -205,8 +296,14 @@ class CheckService {
       let checkUpdated = await this.getById({ id, user });
       checkUpdated = JSON.parse(JSON.stringify(checkUpdated));
 
-      let requireUpdateCron = false;
-      let requireStopCron = false;
+      const authorizationHeader = await CheckAuthorization.findOne({ where: { checkId: id } });
+
+      if (authorizationHeader) {
+        checkUpdated.authorizationHeader = {
+          name: authorizationHeader.headerName,
+          token: decrypt(authorizationHeader.encryptedToken)
+        };
+      }
 
       if (checkForUpdate.target !== currentCheck.target) {
         requireUpdateCron = true;
@@ -253,7 +350,7 @@ class CheckService {
     }
   }
 
-  static async disable({id, user}){
+  static async disable({ id, user }) {
     try {
       const check = await Checks.findOne({ where: { id, userId: user.id } });
 
@@ -271,12 +368,23 @@ class CheckService {
     }
   }
 
-  static async enable({id, user}){
+  static async enable({ id, user }) {
     try {
-      const check = await Checks.findOne({ where: { id, userId: user.id } });
+      let check = await Checks.findOne({ where: { id, userId: user.id } });
 
       if (!check) {
         throw ({ status: 404, message: 'Check not found' });
+      }
+
+      check = JSON.parse(JSON.stringify(check));
+
+      const authorizationHeader = await CheckAuthorization.findOne({ where: { checkId: id } });
+
+      if (authorizationHeader) {
+        check.authorizationHeader = {
+          name: authorizationHeader.headerName,
+          token: decrypt(authorizationHeader.encryptedToken)
+        };
       }
 
       await Checks.update({ enabled: true }, { where: { id, userId: user.id } });
@@ -300,7 +408,13 @@ class CheckService {
       const { rows, count } = await Checks.findAndCountAll({
         ...criterions,
         distinct: true,
-        include: [{ model: CheckIntegration, include: [{ model: Integration }] }]
+        include: [
+          {
+            model: CheckIntegration,
+            include: [{ model: Integration }]
+          },
+          { model: CheckAuthorization, attributes: ['headerName'], require: false }
+        ]
       });
       return { rows, count: rows.length, total: count };
     } catch (error) {
@@ -311,10 +425,20 @@ class CheckService {
   static async getById({ id, user }) {
 
     try {
-      const check = await Checks.findOne({
+      let check = await Checks.findOne({
         where: { id, userId: user.id },
         include: [{ model: CheckIntegration, include: [{ model: Integration }] }]
       });
+      check = JSON.parse(JSON.stringify(check));
+
+      const checkAuthorization = await CheckAuthorization.findOne({ where: { checkId: id } });
+
+      if (checkAuthorization) {
+        check.authorizationHeader = {
+          name: checkAuthorization.headerName
+        };
+      }
+
       return check;
     } catch (error) {
       throw error;
@@ -359,13 +483,15 @@ class CheckService {
   static runCheck(check, isRetry = false) {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
-      const { id, target, userId, timezone } = check;
+      const { id, target, userId, timezone, authorizationHeader } = check;
       const durationStart = performance.now();
       let duration = 0;
+      const headers = authorizationHeader ? { [authorizationHeader.name]: authorizationHeader.token } : {};
 
       try {
-        await axios.get(target, {
-          timeout: 5000
+        await axios.head(target, {
+          timeout: 5000,
+          headers: { ...headers }
         });
         duration = (performance.now() - durationStart).toFixed(5);
         const successMessage = `✅ ${target} is alive at ${getCurrentDate(timezone)} (${timezone})`;
@@ -400,7 +526,13 @@ class CheckService {
           duration: duration,
           timezone: timezone
         });
+
         LogService.cleanByRole({ checkId: id, userId: userId });
+        let status = null;
+
+        if (error.response && error.response.status) {
+          status = error.response.status;
+        }
 
         if (check.retryOnFail && !cronJobs[`${id}_retry`] && !isRetry) {
           console.log('Retry cron job for check: ', check.name);
@@ -410,7 +542,9 @@ class CheckService {
         }
 
         const mostUpdatedCheck = await this.getById({ id: id, user: { id: userId } });
-        const message = isRetry ? `🚨 ${target} still down at ${getCurrentDate(timezone)} (${timezone})` : `🚨 ${target} is down at ${getCurrentDate(timezone)} (${timezone})`;
+        const message = isRetry ?
+          `🚨 ${target} still down at ${getCurrentDate(timezone)} (${timezone}) ${status ? ' status: ' + status : ''}`
+          : `🚨 ${target} is down at ${getCurrentDate(timezone)} (${timezone}) ${status ? ' status: ' + status : ''}`;
 
         if (mostUpdatedCheck) {
           this.sendNotification({
