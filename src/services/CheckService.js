@@ -668,6 +668,11 @@ class CheckService {
           WhatsAppService.sendSuccess({ phone: integrationCheck.integration.appUserId, target: meta.target, date: meta.date });
         }
       }
+      
+      Audit.onUpdate(
+        { id: integrationCheck.integration.userId },
+        { action: 'notification_sent', entity: 'integration', old: {to: integrationCheck.integration.type} }
+      );
     });
   }
 
