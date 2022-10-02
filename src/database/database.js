@@ -14,7 +14,7 @@ export const sequelize = process.env.NODE_ENV === 'test' ? sequelizeForTest : ne
     port: process.env.DATABASE_PORT,
     dialect: 'postgres',
     pool: {
-      max: 100,
+      max: 500,
       min: 0,
       required: 30000,
       idle: 10000
