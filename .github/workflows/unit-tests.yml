@@ -4,7 +4,7 @@ name: deploy-api
 on:
   push:
     branches:
-      - feature/unit-tests
+      - master
 
 jobs:
   # Set the job key. The key is displayed as the job name
