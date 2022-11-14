@@ -246,7 +246,8 @@ class AuthService {
             limit: integrationLimit
           }
         },
-        timezone: userData.timezone || 'UTC'
+        timezone: userData.timezone || 'UTC',
+        createdAt: userData.createdAt
       });
       return { token };
     } catch (error) {
@@ -565,7 +566,8 @@ class AuthService {
         enabled: user.enabled,
         role: user.role,
         settings: user.settings,
-        timezone: user.timezone
+        timezone: user.timezone,
+        createdAt: user.createdAt,
       },
       process.env.TOKEN_KEY,
       {
