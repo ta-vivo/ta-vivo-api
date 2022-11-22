@@ -484,7 +484,7 @@ class CheckService {
     console.log('Run cron job for check: ', check.name);
     const cronJob = new cron.CronJob(check.periodToCheck, async () => {
       const { id, target, userId, timezone, authorizationHeader } = check;
-      const durationStart = performance.now();
+      const durationStart = Date.now();
       let duration = 0;
       const headers = authorizationHeader ? { [authorizationHeader.name]: authorizationHeader.token } : {};
 
@@ -493,7 +493,7 @@ class CheckService {
           timeout: 5000,
           headers: { ...headers }
         });
-        duration = (performance.now() - durationStart).toFixed(5);
+        duration = (Date.now() - durationStart);
         const successMessage = `✅ ${target} is alive at ${getCurrentDate(timezone)} (${timezone})`;
         console.log(successMessage);
         CheckLogs.create({
