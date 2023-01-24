@@ -47,7 +47,7 @@ class StatusPageController {
 
   static async getById(req, res) {
     try {
-      const statusPage = await StatusPageService.getById({ id: req.params.id, user: req.user });
+      const statusPage = await StatusPageService.getById({ uuid: req.params.uuid, user: req.user });
 
       if (statusPage) {
         return res.json(Response.get('Status Page found', statusPage));

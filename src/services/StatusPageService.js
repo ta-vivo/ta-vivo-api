@@ -17,6 +17,22 @@ class StatusPageService {
       throw error;
     }
   }
+
+  static async getById({ uuid, user }) {
+    try {
+      const statusPage = await StatusPages.findOne({
+        where: {
+          uuid,
+          userId: user.id,
+        }
+      });
+
+      return statusPage;
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }
 
 export default StatusPageService;
