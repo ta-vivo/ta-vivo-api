@@ -11,6 +11,7 @@ import UserSubscription from './UserSubscription';
 import CheckAuthorization from './CheckAuthorization';
 import StatusPages from './statusPages/StatusPages';
 import StatusPagesInvitations from './statusPages/StatusPageInvitations';
+import StatusPageChecks from './statusPages/StatusPageChecks';
 
 export {
   User,
@@ -25,5 +26,6 @@ export {
   UserSubscription,
   CheckAuthorization,
   StatusPages,
-  StatusPagesInvitations
+  StatusPagesInvitations,
+  StatusPageChecks
 };
