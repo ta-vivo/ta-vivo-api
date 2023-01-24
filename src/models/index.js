@@ -9,6 +9,8 @@ import CheckIntegration from './CheckIntegration';
 import PendingEmailConfirmation from './PendingEmailConfirmation';
 import UserSubscription from './UserSubscription';
 import CheckAuthorization from './CheckAuthorization';
+import StatusPages from './statusPages/StatusPages';
+import StatusPagesInvitations from './statusPages/StatusPageInvitations';
 
 export {
   User,
@@ -21,5 +23,7 @@ export {
   CheckIntegration,
   PendingEmailConfirmation,
   UserSubscription,
-  CheckAuthorization
+  CheckAuthorization,
+  StatusPages,
+  StatusPagesInvitations
 };
