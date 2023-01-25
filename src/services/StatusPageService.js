@@ -24,7 +24,17 @@ class StatusPageService {
         where: {
           uuid,
           userId: user.id,
-        }
+        },
+        include: [
+          {
+            model: StatusPageChecks,
+            include: [
+              {
+                model: Checks,
+              }
+            ]
+          }
+        ]
       });
 
       return statusPage;
