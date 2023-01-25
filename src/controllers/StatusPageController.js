@@ -6,9 +6,8 @@ class StatusPageController {
 
   static async create(req, res) {
     const newStatusPage = req.body;
-    newStatusPage.user = req.user;
     try {
-      const entityCreated = await StatusPageService.create(newStatusPage);
+      const entityCreated = await StatusPageService.create(newStatusPage, req.user);
       return res.json(Response.get('Status page created', entityCreated));
     } catch (error) {
       res.status(error.status || 500).json({
