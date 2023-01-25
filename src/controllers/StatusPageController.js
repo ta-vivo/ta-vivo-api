@@ -58,12 +58,10 @@ class StatusPageController {
   }
 
   static async update(req, res) {
-    const { id } = req.params;
-    const statusPage = req.body;
-    statusPage.user = req.user;
-
     try {
-      const updatedStatusPage = await StatusPageService.update(id, statusPage, req.user);
+      const statusPage = req.body;
+      statusPage.uuid = req.params.uuid;
+      const updatedStatusPage = await StatusPageService.update(statusPage, req.user);
 
       return res.json(Response.get('Status page Updated', updatedStatusPage));
     } catch (error) {
