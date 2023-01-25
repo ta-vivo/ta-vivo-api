@@ -109,6 +109,76 @@ class StatusPageService {
     }
   }
 
+  static async update({ uuid, name, description, checksToAdd, checksToRemove, emailInvitations }, user) {
+    try {
+      const statusPage = await this.getById({ uuid, user });
+
+      if (!statusPage) {
+        throw { message: 'Status page not found', status: 404 };
+      }
+
+      if (name) {
+        statusPage.name = name;
+      }
+
+      if (description) {
+        statusPage.description = description;
+      }
+
+      if (checksToAdd && checksToAdd.length > 0) {
+        const checksFound = await Checks.findAll({
+          where: {
+            id: checksToAdd
+          }
+        });
+
+        if (checksFound.length > 0) {
+          await StatusPageChecks.bulkCreate(checksFound.map(check => {
+            return {
+              statusPageId: statusPage.id,
+              checkId: check.id
+            };
+          }
+          ));
+        }
+      }
+
+      if (checksToRemove && checksToRemove.length > 0) {
+        await StatusPageChecks.destroy({
+          where: {
+            statusPageId: statusPage.id,
+            checkId: checksToRemove
+          }
+        });
+      }
+
+      if (emailInvitations && emailInvitations.length > 0) {
+        for (let invitation of emailInvitations) {
+          const token = jwt.sign(
+            { email: invitation },
+            process.env.TOKEN_KEY
+          );
+
+          await StatusPagesInvitations.create({
+            statusPageId: statusPage.id,
+            method: 'email',
+            data: {
+              email: invitation,
+              token: token
+            }
+          });
+        }
+      }
+
+      await statusPage.save();
+      const updatedStatusPage = await this.getById({ uuid, user });
+      return updatedStatusPage;
+    } catch (error) {
+      console.log('🚀 ~ file: StatusPageService.js:79 ~ StatusPageService ~ create ~ error', error);
+      throw error;
+    }
+  }
+
 }
 
 export default StatusPageService;
