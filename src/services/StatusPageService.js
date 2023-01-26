@@ -95,7 +95,7 @@ class StatusPageService {
     }
   }
 
-  static async update({ uuid, name, description, checksToAdd, checksToRemove, emailInvitations }, user) {
+  static async update({ uuid, name, description, checksToAdd, checksToRemove, addEmailInvitations, removeEmailInvitations }, user) {
     try {
       const statusPage = await this.getById({ uuid, user });
 
@@ -138,9 +138,21 @@ class StatusPageService {
         });
       }
 
-      if (emailInvitations && emailInvitations.length > 0) {
-        await this.parseEmailInvitations(statusPage.id, emailInvitations);
+      if (addEmailInvitations && addEmailInvitations.length > 0) {
+        await this.parseEmailInvitations(statusPage.id, addEmailInvitations);
         // TODO: Send email
+      }
+
+      if (removeEmailInvitations && removeEmailInvitations.length > 0) {
+        for(let email of removeEmailInvitations) {
+
+          await StatusPagesInvitations.destroy({
+            where: {
+              'data.email': email,
+              statusPageId: statusPage.id
+            }
+          });
+        }
       }
 
       await statusPage.save();
