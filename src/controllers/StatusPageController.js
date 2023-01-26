@@ -74,9 +74,9 @@ class StatusPageController {
 
 
   static async delete(req, res) {
-    try {
-      await StatusPageService.delete({ id: req.params.id, user: req.user });
-      return res.json(Response.get('Status page deleted', {}));
+    try{
+      await StatusPageService.delete({ uuid: req.params.uuid }, req.user);
+      return res.json(Response.get('Status Page not found', {}));
     } catch (error) {
       return res.json(Response.get('Something goes wrong', error, 500));
     }
