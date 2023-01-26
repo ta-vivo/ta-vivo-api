@@ -84,23 +84,9 @@ class StatusPageService {
       }
 
       if (emailInvitations && emailInvitations.length > 0) {
-        for (let invitation of emailInvitations) {
-          const token = jwt.sign(
-            { email: invitation },
-            process.env.TOKEN_KEY
-          );
+        await this.parseEmailInvitations(newStatusPage.id, emailInvitations);
 
-          await StatusPagesInvitations.create({
-            statusPageId: newStatusPage.id,
-            method: 'email',
-            data: {
-              email: invitation,
-              token: token
-            }
-          });
-
-          // TODO: Send email
-        }
+        // TODO: Send email
       }
       return newStatusPage;
     } catch (error) {
@@ -153,21 +139,8 @@ class StatusPageService {
       }
 
       if (emailInvitations && emailInvitations.length > 0) {
-        for (let invitation of emailInvitations) {
-          const token = jwt.sign(
-            { email: invitation },
-            process.env.TOKEN_KEY
-          );
-
-          await StatusPagesInvitations.create({
-            statusPageId: statusPage.id,
-            method: 'email',
-            data: {
-              email: invitation,
-              token: token
-            }
-          });
-        }
+        await this.parseEmailInvitations(statusPage.id, emailInvitations);
+        // TODO: Send email
       }
 
       await statusPage.save();
@@ -193,6 +166,26 @@ class StatusPageService {
       console.log('🚀 ~ file: StatusPageService.js:193 ~ StatusPageService ~ delete ~ error', error);
       throw error;
     }
+  }
+
+  static async parseEmailInvitations(statusPageId, emailInvitations) {
+    for (let invitation of emailInvitations) {
+      const token = jwt.sign(
+        { email: invitation },
+        process.env.TOKEN_KEY
+      );
+
+      await StatusPagesInvitations.create({
+        statusPageId: statusPageId,
+        method: 'email',
+        data: {
+          email: invitation,
+          token: token
+        }
+      });
+    }
+
+    return;
   }
 
 }
