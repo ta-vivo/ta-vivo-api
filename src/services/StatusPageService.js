@@ -179,6 +179,22 @@ class StatusPageService {
     }
   }
 
+  static async delete({ uuid }, user) {
+    try {
+      const statusPage = await this.getById({ uuid, user });
+
+      if (!statusPage) {
+        throw { message: 'Status page not found', status: 404 };
+      }
+
+      await statusPage.destroy();
+      return;
+    } catch (error) {
+      console.log('🚀 ~ file: StatusPageService.js:193 ~ StatusPageService ~ delete ~ error', error);
+      throw error;
+    }
+  }
+
 }
 
 export default StatusPageService;
