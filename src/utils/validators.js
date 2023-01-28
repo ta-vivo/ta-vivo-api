@@ -65,4 +65,14 @@ function getPort(url) {
   return url.substring(url.lastIndexOf(':') + 1);
 }
 
-export { isValidDomain, isValidIpv4, isValidIpv4WithProtocol };
+/**
+ * If the email address contains at least one character before the @, at least one character between
+ * the @ and the ., and at least one character after the ., then it's a valid email address.
+ * @param email - The email address to validate.
+ * @returns a boolean value.
+ */
+function isValidEmail(email) {
+  return /\S+@\S+\.\S+/.test(email);
+}
+
+export { isValidDomain, isValidIpv4, isValidIpv4WithProtocol, isValidEmail };
