@@ -119,6 +119,8 @@ class StatusPageService {
           }
         });
 
+        
+
         if (checksFound.length > 0) {
           await StatusPageChecks.bulkCreate(checksFound.map(check => {
             return {
@@ -182,16 +184,17 @@ class StatusPageService {
   }
 
   static async parseEmailInvitations(statusPageId, emailInvitations) {
+    const currentInvitations = await StatusPagesInvitations.findAll({
+      where: {
+        statusPageId: statusPageId,
+        method: 'email',
+      }
+    });
+
     for (let email of emailInvitations) {
       if (!isValidEmail(email)) {
         continue;
       }
-
-      const currentInvitations = await StatusPagesInvitations.findAll({
-        where: {
-          statusPageId: statusPageId,
-          method: 'email',
-        }});
 
       if (currentInvitations.length > 0) {
         const emailAlreadyInvited = currentInvitations.find(invitation => {
