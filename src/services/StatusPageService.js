@@ -22,7 +22,7 @@ class StatusPageService {
     }
   }
 
-  static async getById({ uuid, user }) {
+  static async getById({ uuid, user, invitation_token }) {
     try {
       const statusPage = await StatusPages.findOne({
         where: {
@@ -40,6 +40,20 @@ class StatusPageService {
           }
         ]
       });
+
+      if (statusPage && invitation_token){
+        const decoded = jwt.verify(invitation_token, process.env.TOKEN_KEY);
+        if (decoded.uuid === statusPage.uuid) {
+          StatusPagesInvitations.update({
+            status: 'accepted'
+          }, {
+            where: {
+              'data.email': decoded.email,
+              statusPageId: statusPage.id
+            }
+          });
+        }
+      }
 
       return statusPage;
     } catch (error) {
@@ -255,14 +269,14 @@ class StatusPageService {
       </p>
       <div style="margin: 20px auto">
         <button style="background-color: #0D7EEC; color: white; padding: 10px 20px; border: none; border-radius: 5px">
-          <a href="https://tavivo.do/status-pages?token=${token}" style="color: white; text-decoration: none">
+          <a href="https://tavivo.do/status-pages?invitation_token=${token}" style="color: white; text-decoration: none">
           Click here to enter to the status page
           </a>
         </button>
       </div>
       <div>
         or copy and paste this link into your browser:
-        <a href="https://tavivo.do/status-pages?token=${token}">https://tavivo.do/status-pages?token=${token}</a>
+        <a href="https://tavivo.do/status-pages?invitation_token=${token}">https://tavivo.do/status-pages?invitation_token=${token}</a>
       </div>
       <p>Thanks,</p>
       <p>The TaVivo team</p>
