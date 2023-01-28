@@ -112,14 +112,27 @@ class StatusPageService {
         statusPage.description = description;
       }
 
+      const currentChecks = await StatusPageChecks.findAll({
+        where: {
+          statusPageId: statusPage.id
+        }
+      });
+
       if (checksToAdd && checksToAdd.length > 0) {
-        const checksFound = await Checks.findAll({
+        let checksFound = await Checks.findAll({
           where: {
             id: checksToAdd
           }
         });
 
-        
+        if (currentChecks.length > 0) {
+          checksFound = checksFound.filter(check => {
+            const checkAlreadyAdded = currentChecks.find(currentCheck => {
+              return currentCheck.checkId === check.id;
+            });
+            return !checkAlreadyAdded;
+          });
+        }
 
         if (checksFound.length > 0) {
           await StatusPageChecks.bulkCreate(checksFound.map(check => {
