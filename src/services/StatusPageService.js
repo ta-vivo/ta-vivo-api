@@ -1,6 +1,7 @@
 import { StatusPages, StatusPageChecks, StatusPagesInvitations, Checks } from '../models';
 import { v4 } from 'uuid';
 import jwt from 'jsonwebtoken';
+import { isValidEmail } from '../utils/validators';
 
 class StatusPageService {
 
@@ -144,7 +145,7 @@ class StatusPageService {
       }
 
       if (removeEmailInvitations && removeEmailInvitations.length > 0) {
-        for(let email of removeEmailInvitations) {
+        for (let email of removeEmailInvitations) {
 
           await StatusPagesInvitations.destroy({
             where: {
@@ -181,9 +182,28 @@ class StatusPageService {
   }
 
   static async parseEmailInvitations(statusPageId, emailInvitations) {
-    for (let invitation of emailInvitations) {
+    for (let email of emailInvitations) {
+      if (!isValidEmail(email)) {
+        continue;
+      }
+
+      const currentInvitations = await StatusPagesInvitations.findAll({
+        where: {
+          statusPageId: statusPageId,
+          method: 'email',
+        }});
+
+      if (currentInvitations.length > 0) {
+        const emailAlreadyInvited = currentInvitations.find(invitation => {
+          return invitation.data.email === email;
+        });
+        if (emailAlreadyInvited) {
+          continue;
+        }
+      }
+
       const token = jwt.sign(
-        { email: invitation },
+        { email: email },
         process.env.TOKEN_KEY
       );
 
@@ -191,7 +211,7 @@ class StatusPageService {
         statusPageId: statusPageId,
         method: 'email',
         data: {
-          email: invitation,
+          email: email,
           token: token
         }
       });
