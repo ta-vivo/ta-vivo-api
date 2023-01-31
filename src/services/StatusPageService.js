@@ -2,6 +2,7 @@ import { StatusPages, StatusPageChecks, StatusPagesInvitations, Checks } from '.
 import { v4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { isValidEmail } from '../utils/validators';
+import MailerService from './MailerService';
 
 class StatusPageService {
 
@@ -21,7 +22,7 @@ class StatusPageService {
     }
   }
 
-  static async getById({ uuid, user }) {
+  static async getById({ uuid, user, invitation_token }) {
     try {
       const statusPage = await StatusPages.findOne({
         where: {
@@ -39,6 +40,20 @@ class StatusPageService {
           }
         ]
       });
+
+      if (statusPage && invitation_token){
+        const decoded = jwt.verify(invitation_token, process.env.TOKEN_KEY);
+        if (decoded.uuid === statusPage.uuid) {
+          StatusPagesInvitations.update({
+            status: 'accepted'
+          }, {
+            where: {
+              'data.email': decoded.email,
+              statusPageId: statusPage.id
+            }
+          });
+        }
+      }
 
       return statusPage;
     } catch (error) {
@@ -85,9 +100,7 @@ class StatusPageService {
       }
 
       if (emailInvitations && emailInvitations.length > 0) {
-        await this.parseEmailInvitations(newStatusPage.id, emailInvitations);
-
-        // TODO: Send email
+        await this.parseEmailInvitations(newStatusPage.id, emailInvitations, uuid);
       }
       return newStatusPage;
     } catch (error) {
@@ -155,8 +168,7 @@ class StatusPageService {
       }
 
       if (addEmailInvitations && addEmailInvitations.length > 0) {
-        await this.parseEmailInvitations(statusPage.id, addEmailInvitations);
-        // TODO: Send email
+        await this.parseEmailInvitations(statusPage.id, addEmailInvitations, statusPage.uuid);
       }
 
       if (removeEmailInvitations && removeEmailInvitations.length > 0) {
@@ -196,7 +208,7 @@ class StatusPageService {
     }
   }
 
-  static async parseEmailInvitations(statusPageId, emailInvitations) {
+  static async parseEmailInvitations(statusPageId, emailInvitations, uuid) {
     const currentInvitations = await StatusPagesInvitations.findAll({
       where: {
         statusPageId: statusPageId,
@@ -219,7 +231,10 @@ class StatusPageService {
       }
 
       const token = jwt.sign(
-        { email: email },
+        {
+          uuid: uuid,
+          email: email
+        },
         process.env.TOKEN_KEY
       );
 
@@ -231,10 +246,50 @@ class StatusPageService {
           token: token
         }
       });
+
+      const { emailBody, emailSubject } = this.getInvitations(token);
+      MailerService.sendMail({ to: email, subject: emailSubject, body: emailBody });
     }
 
     return;
   }
+
+  /**
+   * It returns an object with two properties, emailBody and emailSubject
+   * @param token - The token that was generated when the invitation was created.
+   * @returns An object with two properties, emailBody and emailSubject.
+   */
+  static getInvitations(token) {
+    const emailBody = `
+    <div style="text-align: center">
+      <p>Hi,</p>
+      <p>
+        You have been invited to join a status page on
+        <a style="color: #0D7EEC" href="https://tavivo.do">https://tavivo.do</a>.
+      </p>
+      <div style="margin: 20px auto">
+        <button style="background-color: #0D7EEC; color: white; padding: 10px 20px; border: none; border-radius: 5px">
+          <a href="https://tavivo.do/status-pages?invitation_token=${token}" style="color: white; text-decoration: none">
+          Click here to enter to the status page
+          </a>
+        </button>
+      </div>
+      <div>
+        or copy and paste this link into your browser:
+        <a href="https://tavivo.do/status-pages?invitation_token=${token}">https://tavivo.do/status-pages?invitation_token=${token}</a>
+      </div>
+      <p>Thanks,</p>
+      <p>The TaVivo team</p>
+    </div>
+    `;
+    const emailSubject = 'You have been invited to join a status page on tavivo.do';
+
+    return {
+      emailBody,
+      emailSubject
+    };
+  }
+
 
 }
 

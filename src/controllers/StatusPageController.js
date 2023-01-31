@@ -46,7 +46,8 @@ class StatusPageController {
 
   static async getById(req, res) {
     try {
-      const statusPage = await StatusPageService.getById({ uuid: req.params.uuid, user: req.user });
+      const { invitation_token } = req.query;
+      const statusPage = await StatusPageService.getById({ uuid: req.params.uuid, user: req.user, invitation_token });
 
       if (statusPage) {
         return res.json(Response.get('Status Page found', statusPage));
