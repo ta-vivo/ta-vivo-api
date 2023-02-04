@@ -66,7 +66,7 @@ class StatusPageService {
       const uuid = v4();
       let checksFound = [];
 
-      if (!name || !description || !checks) {
+      if (!name || !checks) {
         throw { message: 'Missing parameters', status: 400 };
       }
 
