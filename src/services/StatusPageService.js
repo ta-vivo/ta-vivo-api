@@ -61,7 +61,7 @@ class StatusPageService {
     }
   }
 
-  static async create({ name, description, checks, emailInvitations }, user) {
+  static async create({ name, description, checks, emailInvitations, isPublic }, user) {
     try {
       const uuid = v4();
       let checksFound = [];
@@ -86,7 +86,8 @@ class StatusPageService {
         name,
         description,
         uuid,
-        userId: user.id
+        userId: user.id,
+        isPublic: isPublic || false
       });
 
       if (checksFound.length > 0) {
@@ -109,7 +110,7 @@ class StatusPageService {
     }
   }
 
-  static async update({ uuid, name, description, checksToAdd, checksToRemove, addEmailInvitations, removeEmailInvitations }, user) {
+  static async update({ uuid, name, description, isPublic, checksToAdd, checksToRemove, addEmailInvitations, removeEmailInvitations }, user) {
     try {
       const statusPage = await this.getById({ uuid, user });
 
@@ -123,6 +124,10 @@ class StatusPageService {
 
       if (description) {
         statusPage.description = description;
+      }
+
+      if (typeof isPublic === 'boolean') {
+        statusPage.isPublic = isPublic;
       }
 
       const currentChecks = await StatusPageChecks.findAll({
