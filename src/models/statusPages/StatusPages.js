@@ -20,6 +20,11 @@ const StatusPages = sequelize.define('status_pages', {
     type: Sequelize.TEXT,
     allowNull: false
   },
+  isPublic: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
   enabled: {
     type: Sequelize.BOOLEAN,
     allowNull: true,
