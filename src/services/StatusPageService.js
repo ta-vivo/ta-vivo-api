@@ -3,6 +3,7 @@ import { v4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { isValidEmail } from '../utils/validators';
 import MailerService from './MailerService';
+import { Sequelize } from 'sequelize';
 
 class StatusPageService {
 
@@ -37,6 +38,13 @@ class StatusPageService {
                 model: Checks,
               }
             ]
+          },
+          {
+            model: StatusPagesInvitations,
+            attributes: [
+              'status',
+              [Sequelize.json('data.email'), 'email']
+          ],
           }
         ]
       });
