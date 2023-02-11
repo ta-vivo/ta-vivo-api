@@ -100,7 +100,7 @@ class StatusPageService {
       // if the logged user is the owner of the status page
       if (authenticationToken) {
         const decoded = jwt.verify(authenticationToken, process.env.TOKEN_KEY);
-        console.log({ decoded });
+        
         if (statusPage.userId === decoded.id) {
           // send the status page
           return { ...statusPage.dataValues, isTheOwner: true };
