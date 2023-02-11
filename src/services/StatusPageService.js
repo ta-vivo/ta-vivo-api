@@ -1,4 +1,4 @@
-import { StatusPages, StatusPageChecks, StatusPagesInvitations, Checks } from '../models';
+import { StatusPages, StatusPageChecks, StatusPagesInvitations, Checks, CheckLogs } from '../models';
 import { v4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { isValidEmail } from '../utils/validators';
@@ -100,10 +100,38 @@ class StatusPageService {
       // if the logged user is the owner of the status page
       if (authenticationToken) {
         const decoded = jwt.verify(authenticationToken, process.env.TOKEN_KEY);
-        
+
         if (statusPage.userId === decoded.id) {
-          // send the status page
-          return { ...statusPage.dataValues, isTheOwner: true };
+          let checks = await StatusPageChecks.findAll({
+            where: {
+              statusPageId: statusPage.id
+            },
+            include: [
+              {
+                model: Checks,
+                attributes: ['id', 'name', 'target', 'periodToCheckLabel', 'timezone']
+              }
+            ]
+          });
+
+          checks = checks.map(check => {
+            return {
+              ...check.check.dataValues
+            };
+          });
+
+          for (let check of checks) {
+            // find the last logs of the check
+            // This need to do separate because of the limitation of sequelize
+            const checkLog = await CheckLogs.findOne({
+              attributes: ['status', 'duration', 'createdAt'],
+              where: { checkId: check.id },
+              order: [['createdAt', 'DESC']]
+            });
+
+            check.lastLog = checkLog;
+          }
+          return { ...statusPage.dataValues, checks, isTheOwner: true };
         } else {
           throw { message: 'Forbidden', status: 403 };
         }
