@@ -39,7 +39,10 @@ class StatusPageController {
 
       return res.json(Response.get('Status page list', rows, 200, { count, total, offset }));
     } catch (error) {
-      return res.json(Response.get('Something goes wrong', error, 500));
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
     }
   }
 
