@@ -82,7 +82,10 @@ class StatusPageController {
       await StatusPageService.delete({ uuid: req.params.uuid }, req.user);
       return res.json(Response.get('Status Page not found', {}));
     } catch (error) {
-      return res.json(Response.get('Something goes wrong', error, 500));
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
     }
   }
 }
