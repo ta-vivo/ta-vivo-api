@@ -44,12 +44,12 @@ class StatusPageService {
             attributes: [
               'status',
               [Sequelize.json('data.email'), 'email']
-          ],
+            ],
           }
         ]
       });
 
-      if (statusPage && invitation_token){
+      if (statusPage && invitation_token) {
         const decoded = jwt.verify(invitation_token, process.env.TOKEN_KEY);
         if (decoded.uuid === statusPage.uuid) {
           StatusPagesInvitations.update({
@@ -65,6 +65,56 @@ class StatusPageService {
 
       return statusPage;
     } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * This method is used to get a status page by uuid and get the data to 
+   * view the status page with graphs and all the data
+   * 
+   * @params
+   * uuid: the uuid of the status page
+   * invitationToken: the invitation token to view the status page send via email for example
+   * authenticationToken: the authentication token to view the status page if the user is logged
+   */
+  static async getByuuid({ uuid, invitationToken, authenticationToken }) {
+    try {
+      const statusPage = await StatusPages.findOne({ where: { uuid } });
+
+      // check if the status page is public
+      if (statusPage.isPublic) {
+        // send the status page
+        return statusPage;
+      }
+
+      if (invitationToken) {
+        const decoded = jwt.verify(invitationToken, process.env.TOKEN_KEY);
+        if (decoded.uuid !== uuid) {
+          throw { message: 'Invalid invitation token', status: 400 };
+        }
+
+        return statusPage;
+      }
+
+      // if the logged user is the owner of the status page
+      if (authenticationToken) {
+        const decoded = jwt.verify(authenticationToken, process.env.TOKEN_KEY);
+        console.log({ decoded });
+        if (statusPage.userId === decoded.id) {
+          // send the status page
+          return { ...statusPage.dataValues, isTheOwner: true };
+        } else {
+          throw { message: 'Forbidden', status: 403 };
+        }
+      }
+
+      throw { message: 'Forbidden', status: 403 };
+
+    } catch (error) {
+      if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+        throw { message: 'Invalid token', status: 400 };
+      }
       throw error;
     }
   }
