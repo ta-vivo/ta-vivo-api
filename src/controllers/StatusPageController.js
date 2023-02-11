@@ -57,7 +57,33 @@ class StatusPageController {
       }
       return res.json(Response.get('Status Page not found', {}));
     } catch (error) {
-      return res.json(Response.get('Something goes wrong', error, 500));
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
+    }
+  }
+
+  static async getByuuid(req, res) {
+    try {
+      const { invitation_token } = req.query;
+      const { authenticationToken } = req;
+
+      const statusPage = await StatusPageService.getByuuid({
+        uuid: req.params.uuid,
+        invitationToken: invitation_token,
+        authenticationToken
+      });
+
+      if (statusPage) {
+        return res.json(Response.get('Status Page found', statusPage));
+      }
+      return res.json(Response.get('Status Page not found', {}));
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Something goes wrong',
+        data: error
+      });
     }
   }
 
@@ -78,7 +104,7 @@ class StatusPageController {
 
 
   static async delete(req, res) {
-    try{
+    try {
       await StatusPageService.delete({ uuid: req.params.uuid }, req.user);
       return res.json(Response.get('Status Page not found', {}));
     } catch (error) {
