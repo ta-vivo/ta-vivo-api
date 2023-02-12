@@ -147,6 +147,64 @@ class StatusPageService {
     }
   }
 
+  static async getLogsByuuid({ uuid, checkId, invitationToken, authenticationToken }){
+    try {
+      if(!checkId) {
+        throw { message: 'Missing check id', status: 400 };
+      }
+
+      const statusPage = await StatusPages.findOne({ where: { uuid } });
+
+      // check if the status page is public
+      if (statusPage.isPublic) {
+        // send the status page
+        return statusPage;
+      }
+
+      if (invitationToken) {
+        const decoded = jwt.verify(invitationToken, process.env.TOKEN_KEY);
+        if (decoded.uuid !== uuid) {
+          throw { message: 'Invalid invitation token', status: 400 };
+        }
+
+        const checkLogs = await CheckLogs.findAll({
+          attributes: ['status', 'duration', 'createdAt'],
+          where: { checkId },
+          order: [['createdAt', 'DESC']],
+          limit: 20
+        });
+
+        return checkLogs;
+      }
+
+      // if the logged user is the owner of the status page
+      if (authenticationToken) {
+        const decoded = jwt.verify(authenticationToken, process.env.TOKEN_KEY);
+
+        if (statusPage.userId === decoded.id) {
+          const checkLogs = await CheckLogs.findAll({
+            attributes: ['status', 'duration', 'createdAt'],
+            where: { checkId },
+            order: [['createdAt', 'DESC']],
+            limit: 20
+          });
+
+          return checkLogs;
+        } else {
+          throw { message: 'Forbidden', status: 403 };
+        }
+      }
+
+      throw { message: 'Forbidden', status: 403 };
+
+    } catch (error) {
+      if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+        throw { message: 'Invalid token', status: 400 };
+      }
+      throw error;
+    }
+  }
+
   static async create({ name, description, checks, emailInvitations, isPublic }, user) {
     try {
       const uuid = v4();
