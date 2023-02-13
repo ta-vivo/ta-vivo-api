@@ -116,9 +116,9 @@ class StatusPageService {
     }
   }
 
-  static async getLogsByuuid({ uuid, checkId, invitationToken, authenticationToken }){
+  static async getLogsByuuid({ uuid, checkId, invitationToken, authenticationToken }) {
     try {
-      if(!checkId) {
+      if (!checkId) {
         throw { message: 'Missing check id', status: 400 };
       }
 
@@ -126,8 +126,7 @@ class StatusPageService {
 
       // check if the status page is public
       if (statusPage.isPublic) {
-        // send the status page
-        return statusPage;
+        return await this.getStatusPagesCheckLogs(checkId);
       }
 
       if (invitationToken) {
@@ -136,14 +135,7 @@ class StatusPageService {
           throw { message: 'Invalid invitation token', status: 400 };
         }
 
-        const checkLogs = await CheckLogs.findAll({
-          attributes: ['status', 'duration', 'createdAt'],
-          where: { checkId },
-          order: [['createdAt', 'DESC']],
-          limit: 20
-        });
-
-        return checkLogs;
+        return await this.getStatusPagesCheckLogs(checkId);
       }
 
       // if the logged user is the owner of the status page
@@ -151,14 +143,7 @@ class StatusPageService {
         const decoded = jwt.verify(authenticationToken, process.env.TOKEN_KEY);
 
         if (statusPage.userId === decoded.id) {
-          const checkLogs = await CheckLogs.findAll({
-            attributes: ['status', 'duration', 'createdAt'],
-            where: { checkId },
-            order: [['createdAt', 'DESC']],
-            limit: 20
-          });
-
-          return checkLogs;
+          return await this.getStatusPagesCheckLogs(checkId);
         } else {
           throw { message: 'Forbidden', status: 403 };
         }
@@ -439,6 +424,15 @@ class StatusPageService {
       check.lastLog = checkLog;
     }
     return { ...statusPage.dataValues, checks, isTheOwner: true };
+  }
+
+  static async getStatusPagesCheckLogs(checkId) {
+    return CheckLogs.findAll({
+      attributes: ['status', 'duration', 'createdAt'],
+      where: { checkId },
+      order: [['createdAt', 'DESC']],
+      limit: 20
+    });
   }
 
 
