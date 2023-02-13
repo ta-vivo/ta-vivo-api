@@ -82,10 +82,8 @@ class StatusPageService {
     try {
       const statusPage = await StatusPages.findOne({ where: { uuid } });
 
-      // check if the status page is public
       if (statusPage.isPublic) {
-        // send the status page
-        return statusPage;
+        return this.getStatusPage(statusPage);
       }
 
       if (invitationToken) {
@@ -94,7 +92,7 @@ class StatusPageService {
           throw { message: 'Invalid invitation token', status: 400 };
         }
 
-        return statusPage;
+        return this.getStatusPage(statusPage);
       }
 
       // if the logged user is the owner of the status page
@@ -102,36 +100,7 @@ class StatusPageService {
         const decoded = jwt.verify(authenticationToken, process.env.TOKEN_KEY);
 
         if (statusPage.userId === decoded.id) {
-          let checks = await StatusPageChecks.findAll({
-            where: {
-              statusPageId: statusPage.id
-            },
-            include: [
-              {
-                model: Checks,
-                attributes: ['id', 'name', 'target', 'periodToCheckLabel', 'timezone']
-              }
-            ]
-          });
-
-          checks = checks.map(check => {
-            return {
-              ...check.check.dataValues
-            };
-          });
-
-          for (let check of checks) {
-            // find the last logs of the check
-            // This need to do separate because of the limitation of sequelize
-            const checkLog = await CheckLogs.findOne({
-              attributes: ['status', 'duration', 'createdAt'],
-              where: { checkId: check.id },
-              order: [['createdAt', 'DESC']]
-            });
-
-            check.lastLog = checkLog;
-          }
-          return { ...statusPage.dataValues, checks, isTheOwner: true };
+          return this.getStatusPage(statusPage);
         } else {
           throw { message: 'Forbidden', status: 403 };
         }
@@ -437,6 +406,39 @@ class StatusPageService {
       emailBody,
       emailSubject
     };
+  }
+
+  static async getStatusPage(statusPage) {
+    let checks = await StatusPageChecks.findAll({
+      where: {
+        statusPageId: statusPage.id
+      },
+      include: [
+        {
+          model: Checks,
+          attributes: ['id', 'name', 'target', 'periodToCheckLabel', 'timezone']
+        }
+      ]
+    });
+
+    checks = checks.map(check => {
+      return {
+        ...check.check.dataValues
+      };
+    });
+
+    for (let check of checks) {
+      // find the last logs of the check
+      // This need to do separate because of the limitation of sequelize
+      const checkLog = await CheckLogs.findOne({
+        attributes: ['status', 'duration', 'createdAt'],
+        where: { checkId: check.id },
+        order: [['createdAt', 'DESC']]
+      });
+
+      check.lastLog = checkLog;
+    }
+    return { ...statusPage.dataValues, checks, isTheOwner: true };
   }
 
 
