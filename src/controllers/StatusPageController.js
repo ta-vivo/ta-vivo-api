@@ -66,14 +66,24 @@ class StatusPageController {
 
   static async getByuuid(req, res) {
     try {
-      const { invitation_token } = req.query;
+      const { invitation_token, logs, check_id } = req.query;
       const { authenticationToken } = req;
+      let statusPage;
 
-      const statusPage = await StatusPageService.getByuuid({
-        uuid: req.params.uuid,
-        invitationToken: invitation_token,
-        authenticationToken
-      });
+      if(logs) {
+        statusPage = await StatusPageService.getLogsByuuid({
+          uuid: req.params.uuid,
+          invitationToken: invitation_token,
+          authenticationToken,
+          checkId: check_id
+        });
+      } else {
+        statusPage = await StatusPageService.getByuuid({
+          uuid: req.params.uuid,
+          invitationToken: invitation_token,
+          authenticationToken
+        });
+      }
 
       if (statusPage) {
         return res.json(Response.get('Status Page found', statusPage));
