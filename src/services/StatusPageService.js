@@ -350,7 +350,7 @@ class StatusPageService {
         }
       });
 
-      const { emailBody, emailSubject } = this.getInvitations(token);
+      const { emailBody, emailSubject } = this.getInvitations(token, uuid);
       MailerService.sendMail({ to: email, subject: emailSubject, body: emailBody });
     }
 
@@ -362,7 +362,7 @@ class StatusPageService {
    * @param token - The token that was generated when the invitation was created.
    * @returns An object with two properties, emailBody and emailSubject.
    */
-  static getInvitations(token) {
+  static getInvitations(token, uuid) {
     const emailBody = `
     <div style="text-align: center">
       <p>Hi,</p>
@@ -372,14 +372,14 @@ class StatusPageService {
       </p>
       <div style="margin: 20px auto">
         <button style="background-color: #0D7EEC; color: white; padding: 10px 20px; border: none; border-radius: 5px">
-          <a href="https://tavivo.do/status-pages?invitation_token=${token}" style="color: white; text-decoration: none">
+          <a href="https://tavivo.do/status-pages/view/${uuid}?invitation_token=${token}" style="color: white; text-decoration: none">
           Click here to enter to the status page
           </a>
         </button>
       </div>
       <div>
         or copy and paste this link into your browser:
-        <a href="https://tavivo.do/status-pages?invitation_token=${token}">https://tavivo.do/status-pages?invitation_token=${token}</a>
+        <a href="https://tavivo.do/status-pages/view/${uuid}?invitation_token=${token}">https://tavivo.do/status-pages/view/${uuid}?invitation_token=${token}</a>
       </div>
       <p>Thanks,</p>
       <p>The TaVivo team</p>
