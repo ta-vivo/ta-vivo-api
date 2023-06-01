@@ -644,7 +644,10 @@ class CheckService {
         }
       } else if (integrationCheck.integration.type === 'slack') {
         try {
-          SlackService.sendMessage(message, integrationCheck.integration.appUserId);
+          SlackService.sendMessage({
+            message, 
+            webhookURL: integrationCheck.integration.data.webhookURL
+          });
         } catch (error) {
           console.log('🚨 failed to send slack', error);
         }
