@@ -2,10 +2,14 @@ import { App } from '@slack/bolt';
 import { Integration } from '../models/index';
 import axios from 'axios';
 
-const app = new App({
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
-  token: process.env.SLACK_BOT_TOKEN,
-});
+let app;
+
+if(process.env.SLACK_SIGNING_SECRET && process.env.SLACK_BOT_TOKEN){
+  app = new App({
+    signingSecret: process.env.SLACK_SIGNING_SECRET,
+    token: process.env.SLACK_BOT_TOKEN,
+  });
+}
 
 class SlackService {
 
