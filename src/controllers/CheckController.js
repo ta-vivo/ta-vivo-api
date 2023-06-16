@@ -1,6 +1,7 @@
 import CheckService from '../services/CheckService';
 import Response from '../utils/response';
 import querystringConverterHelper from '../utils/querystringConverterHelper';
+import { Checks } from '../models';
 
 class CheckController {
 
@@ -134,6 +135,43 @@ class CheckController {
     try {
       await CheckService.delete({ id: req.params.id, user: req.user });
       return res.json(Response.get('Check deleted', {}));
+    } catch (error) {
+      return res.json(Response.get('Something goes wrong', error, 500));
+    }
+  }
+
+  static async downloadLogsByCheckId(req, res) {
+    try {
+      const { query } = req;
+
+      let { where, limit, offset, order } = querystringConverterHelper.parseQuery(query);
+      const { rows, count, total } = await CheckService.getLogsByCheckId({
+        id: req.params.id,
+        user: req.user,
+        criterions: {
+          where,
+          limit,
+          offset,
+          order,
+          include: { model: Checks, attributes:['id','name']},
+          // These two are needed so it's easier to process the records 
+          // and convert them to CSV without them being sequelize objects
+          raw: true,
+          nest: true
+        }
+      });
+
+      if (rows) {
+        const [csvContent,filename] = await CheckService.getLogsCSV(rows);
+        if(csvContent){
+          return res.set({
+            'Content-Type': 'text/csv',
+            'Content-Disposition': `attachment; filename='${filename}'`
+          }).send(csvContent);
+        }
+        return res.json(Response.get('Check logs found', rows, 200, { count, total, offset }));
+      }
+      return res.json(Response.get('Check logs not found', {}));
     } catch (error) {
       return res.json(Response.get('Something goes wrong', error, 500));
     }
