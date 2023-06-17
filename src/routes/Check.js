@@ -7,6 +7,7 @@ const router = Router();
 router.get('/', verifyToken, CheckController.getAll);
 router.get('/:id', verifyToken, CheckController.getById);
 router.get('/:id/logs', verifyToken, CheckController.getLogsByCheckId);
+router.get('/:id/logs/download', CheckController.downloadLogsByCheckId);
 router.put('/:id', verifyToken, CheckController.update);
 router.put('/:id/disable', verifyToken, CheckController.disable);
 router.put('/:id/enable', verifyToken, CheckController.enable);

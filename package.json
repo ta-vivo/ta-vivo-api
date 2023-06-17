@@ -26,6 +26,7 @@
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
+    "csv-stringify": "^6.4.0",
     "dayjs": "^1.11.0",
     "discord.js": "^13.6.0",
     "dotenv": "^8.2.0",

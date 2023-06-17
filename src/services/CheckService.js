@@ -16,6 +16,8 @@ import Audit from '../services/AuditService';
 import { getCurrentDate } from '../utils/time';
 import timezones from '../utils/timezones.json';
 import { encrypt, decrypt } from '../utils/crypto';
+import dayjs from 'dayjs';
+import {createCSVString} from '../utils/csvUtils';
 
 let cronJobs = {};
 
@@ -453,6 +455,11 @@ class CheckService {
       } else {
         criterions.where = { checkId: Number(id) };
       }
+
+      if(criterions.includeCheckModel) {
+        criterions.include =  { model: Checks, attributes:['id','name']}
+      }
+
       const { rows, count } = await CheckLogs.findAndCountAll({
         ...criterions
       });
@@ -677,6 +684,17 @@ class CheckService {
         { action: 'notification_sent', entity: 'integration', old: {to: integrationCheck.integration.type} }
       );
     });
+  }
+
+  static async getLogsCSV(logs) {
+    const headers = ['check_name','id','status','duration(ms)','timezone','check_time'];
+    const data = logs.map((log)=>{
+      return [ log.check.name,log.id, log.status,log.duration,log.timezone,dayjs(log.createdAt).format('YYYY-MM-DD HH:mm:ss')];
+    });
+
+    const result = await createCSVString(headers,data);
+    return [result,`check_logs-${dayjs().format('YYYY-MM-DD HH:mm:ss')}.csv`];
+    
   }
 
 }
