@@ -17,7 +17,7 @@ import { getCurrentDate } from '../utils/time';
 import timezones from '../utils/timezones.json';
 import { encrypt, decrypt } from '../utils/crypto';
 import dayjs from 'dayjs';
-import {createCSVString} from '../utils/csvUtils';
+import { createCSVString } from '../utils/csvUtils';
 
 let cronJobs = {};
 
@@ -456,8 +456,8 @@ class CheckService {
         criterions.where = { checkId: Number(id) };
       }
 
-      if(criterions.includeCheckModel) {
-        criterions.include =  { model: Checks, attributes:['id','name']}
+      if (criterions.includeCheckModel) {
+        criterions.include = { model: Checks, attributes: ['id', 'name'] };
       }
 
       const { rows, count } = await CheckLogs.findAndCountAll({
@@ -652,7 +652,7 @@ class CheckService {
       } else if (integrationCheck.integration.type === 'slack') {
         try {
           SlackService.sendMessage({
-            message, 
+            message,
             webhookURL: integrationCheck.integration.data.webhookURL
           });
         } catch (error) {
@@ -678,23 +678,23 @@ class CheckService {
           WhatsAppService.sendSuccess({ phone: integrationCheck.integration.appUserId, target: meta.target, date: meta.date });
         }
       }
-      
+
       Audit.onUpdate(
         { id: integrationCheck.integration.userId },
-        { action: 'notification_sent', entity: 'integration', old: {to: integrationCheck.integration.type} }
+        { action: 'notification_sent', entity: 'integration', old: { to: integrationCheck.integration.type } }
       );
     });
   }
 
   static async getLogsCSV(logs) {
-    const headers = ['check_name','id','status','duration(ms)','timezone','check_time'];
-    const data = logs.map((log)=>{
-      return [ log.check.name,log.id, log.status,log.duration,log.timezone,dayjs(log.createdAt).format('YYYY-MM-DD HH:mm:ss')];
+    const headers = ['check_name', 'id', 'status', 'duration(ms)', 'timezone', 'check_time'];
+    const data = logs.map((log) => {
+      return [log.check.name, log.id, log.status, log.duration, log.timezone, dayjs(log.createdAt).format('YYYY-MM-DD HH:mm:ss')];
     });
 
-    const result = await createCSVString(headers,data);
-    return [result,`check_logs-${dayjs().format('YYYY-MM-DD HH:mm:ss')}.csv`];
-    
+    const result = await createCSVString(headers, data);
+    return [result, `check_logs-${dayjs().format('YYYY-MM-DD HH:mm:ss')}.csv`];
+
   }
 
 }
