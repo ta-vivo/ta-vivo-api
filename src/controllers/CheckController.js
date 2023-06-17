@@ -104,7 +104,7 @@ class CheckController {
     const { id } = req.params;
 
     try {
-      const updateCheck = await CheckService.disable({id, user: req.user});
+      const updateCheck = await CheckService.disable({ id, user: req.user });
 
       return res.json(Response.get('Check Updated', updateCheck));
     } catch (error) {
@@ -119,7 +119,7 @@ class CheckController {
     const { id } = req.params;
 
     try {
-      const updateCheck = await CheckService.enable({id, user: req.user});
+      const updateCheck = await CheckService.enable({ id, user: req.user });
 
       return res.json(Response.get('Check Updated', updateCheck));
     } catch (error) {
@@ -161,8 +161,8 @@ class CheckController {
       });
 
       if (rows) {
-        const [csvContent,filename] = await CheckService.getLogsCSV(rows);
-        if(csvContent){
+        const [csvContent, filename] = await CheckService.getLogsCSV(rows);
+        if (csvContent) {
           return res.set({
             'Content-Type': 'text/csv',
             'Content-Disposition': `attachment; filename='${filename}'`
