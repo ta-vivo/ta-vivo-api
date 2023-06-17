@@ -455,6 +455,11 @@ class CheckService {
       } else {
         criterions.where = { checkId: Number(id) };
       }
+
+      if(criterions.includeCheckModel) {
+        criterions.include =  { model: Checks, attributes:['id','name']}
+      }
+
       const { rows, count } = await CheckLogs.findAndCountAll({
         ...criterions
       });

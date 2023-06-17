@@ -1,7 +1,6 @@
 import CheckService from '../services/CheckService';
 import Response from '../utils/response';
 import querystringConverterHelper from '../utils/querystringConverterHelper';
-import { Checks } from '../models';
 
 class CheckController {
 
@@ -153,7 +152,7 @@ class CheckController {
           limit,
           offset,
           order,
-          include: { model: Checks, attributes:['id','name']},
+          includeCheckModel: true,
           // These two are needed so it's easier to process the records 
           // and convert them to CSV without them being sequelize objects
           raw: true,
