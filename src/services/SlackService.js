@@ -48,6 +48,10 @@ class SlackService {
 
   static async sendMessage({ message, webhookURL }) {
     try {
+      if (!webhookURL) {
+        throw { message: 'Webhook URL is required', status: 400 };
+      }
+
       await axios.post(webhookURL, {
         text: message
       },
