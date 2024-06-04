@@ -47,7 +47,7 @@ class WhatsappService {
       .post('/messages/send-message-template', {
         phone: phone,
         template: {
-          name: 'unique_code_request',
+          name: 'unique_code_request_2',
           components: [
             {
               type: 'body',
