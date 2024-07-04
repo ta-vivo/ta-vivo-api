@@ -113,9 +113,6 @@ class CheckService {
       let entityCreated = await Checks.create(checkForCreate, { transaction: t });
       entityCreated = JSON.parse(JSON.stringify(entityCreated));
 
-      if (newCheck.addIntegrations) {
-        this.addIntegrations(entityCreated.id, newCheck.addIntegrations);
-      }
 
       if (checkForCreate.authorizationHeader && checkForCreate.authorizationHeader.name && checkForCreate.authorizationHeader.token) {
         const encryptedHeaders = encrypt(checkForCreate.authorizationHeader.token);
@@ -133,6 +130,11 @@ class CheckService {
       }
 
       await t.commit();
+
+      if (newCheck.addIntegrations) {
+        this.addIntegrations(entityCreated.id, newCheck.addIntegrations);
+      }
+
       this.runCheck(entityCreated);
       return entityCreated;
     } catch (error) {
